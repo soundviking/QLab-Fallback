@@ -4331,7 +4331,7 @@ final class NetworkDiscovery: ObservableObject {
             let data = pipe.fileHandleForReading
                 .readDataToEndOfFile()
 
-            guard
+            guard process.terminationStatus == 0,
                 let result = String(
                     data: data,
                     encoding: .utf8

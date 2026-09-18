@@ -17,9 +17,7 @@ struct ContentView: View {
     )
     private var onboardingCompleted = false
 
-    @State private var qlabPasscodeDraft = ""
-    @State private var showQLabPasscode = false
-    @State private var passcodeCopied = false
+    @EnvironmentObject private var qlabDiscovery: QLabDiscoveryService
     @State private var availableWorkspaces: [String] = []
     @State private var workspaceDetectionError: String?
 
@@ -852,16 +850,10 @@ struct ContentView: View {
         .onChange(of: networkDiscovery.localQLabWorkspace) { _, name in
             if let name, !name.isEmpty, networkDiscovery.qlabOSCConnected { workspaceName = name }
         }
+        .onReceive(qlabDiscovery.$workspaces) { _ in Task { @MainActor in applyDiscoveredWorkspaces() } }
+        .onReceive(qlabDiscovery.$error) { _ in Task { @MainActor in applyDiscoveredWorkspaces() } }
         .onAppear {
-
-            if qlabPasscodeDraft.isEmpty {
-
-                qlabPasscodeDraft =
-                    networkDiscovery
-                        .currentQLabPasscode()
-            }
-
-
+            applyDiscoveredWorkspaces()
             if !onboardingCompleted {
 
                 DispatchQueue.main.asyncAfter(
@@ -2926,114 +2918,7 @@ struct ContentView: View {
                         .foregroundStyle(.secondary)
 
 
-                        HStack(spacing: 8) {
-
-                            if showQLabPasscode {
-
-                                TextField(
-                                    "4 chiffres",
-                                    text:
-                                        $qlabPasscodeDraft
-                                )
-
-                            } else {
-
-                                SecureField(
-                                    "4 chiffres",
-                                    text:
-                                        $qlabPasscodeDraft
-                                )
-                            }
-
-
-                            Button {
-
-                                showQLabPasscode
-                                    .toggle()
-
-                            } label: {
-
-                                Image(
-                                    systemName:
-                                        showQLabPasscode
-                                        ? "eye.slash"
-                                        : "eye"
-                                )
-                            }
-                            .help(
-                                showQLabPasscode
-                                ? "Masquer"
-                                : "Afficher"
-                            )
-
-
-                            Button {
-
-                                let value =
-                                    networkDiscovery
-                                        .currentQLabPasscode()
-
-                                NSPasteboard
-                                    .general
-                                    .clearContents()
-
-                                NSPasteboard
-                                    .general
-                                    .setString(
-                                        value,
-                                        forType:
-                                            .string
-                                    )
-
-                                passcodeCopied =
-                                    true
-
-                                DispatchQueue
-                                    .main
-                                    .asyncAfter(
-                                        deadline:
-                                            .now() + 1.5
-                                    ) {
-
-                                        passcodeCopied =
-                                            false
-                                    }
-
-                            } label: {
-
-                                Label(
-                                    passcodeCopied
-                                    ? "Copié"
-                                    : "Copier",
-                                    systemImage:
-                                        passcodeCopied
-                                        ? "checkmark"
-                                        : "doc.on.doc"
-                                )
-                            }
-
-
-                            Button("Enregistrer") {
-
-                                let digits =
-                                    qlabPasscodeDraft
-                                        .filter {
-                                            $0.isNumber
-                                        }
-
-                                qlabPasscodeDraft =
-                                    String(
-                                        digits.prefix(4)
-                                    )
-
-                                _ =
-                                    networkDiscovery
-                                        .saveQLabPasscode(
-                                            qlabPasscodeDraft
-                                        )
-                            }
-                        }
-
+                        OSCPasscodeEditor()
 
                         Text(
                             "QLab accepte un passcode OSC de 4 chiffres. Valeur recommandée pour Fallback : 1515."
@@ -3079,14 +2964,6 @@ struct ContentView: View {
 
                     Text("Sécurité OSC QLab")
                 }
-                .onAppear {
-
-                    qlabPasscodeDraft =
-                        networkDiscovery
-                            .currentQLabPasscode()
-                }
-
-
                 // ====================================================
                 // MASTER
                 // ====================================================
@@ -4069,15 +3946,7 @@ struct ContentView: View {
                         networkDiscovery.startBackupSearch(workspace: workspaceName)
                     } else {
 
-                        let qlabWorkspace =
-                            networkDiscovery
-                                .getQLabWorkspaceName()
-
-                        networkDiscovery.startMaster(
-                            workspace:
-                                qlabWorkspace
-                                ?? workspaceName
-                        )
+                        networkDiscovery.startMaster(workspace: workspaceName)
                     }
                 } else {
                     networkDiscovery.stop()
@@ -4329,189 +4198,21 @@ struct ContentView: View {
 
 
     private func detectWorkspace() {
-
-        workspaceDetectionError = nil
-
-        let script = """
-        tell application "QLab"
-
-            set frontName to name of front workspace
-
-            try
-                set workspaceNames to name of every workspace
-            on error
-                set workspaceNames to {frontName}
-            end try
-
-            set AppleScript's text item delimiters to ASCII character 31
-            set joinedNames to workspaceNames as text
-
-            return frontName & (ASCII character 30) & joinedNames
-
-        end tell
-        """
-
-
-        let process = Process()
-
-        process.executableURL =
-            URL(
-                fileURLWithPath:
-                    "/usr/bin/osascript"
-            )
-
-        process.arguments = [
-            "-e",
-            script
-        ]
-
-
-        let outputPipe = Pipe()
-
-        process.standardOutput = outputPipe
-        process.standardError = outputPipe
-
-
-        do {
-
-            try process.run()
-
-            process.waitUntilExit()
-
-
-            let data =
-                outputPipe
-                    .fileHandleForReading
-                    .readDataToEndOfFile()
-
-
-            guard
-                process.terminationStatus == 0,
-                let result =
-                    String(
-                        data: data,
-                        encoding: .utf8
-                    )
-            else {
-
-                availableWorkspaces = []
-                workspaceName = "Non détecté"
-                workspaceDetectionError =
-                    "Impossible de lire les workspaces QLab."
-                return
-            }
-
-
-            let cleaned =
-                result.trimmingCharacters(
-                    in: .whitespacesAndNewlines
-                )
-
-
-            let sections =
-                cleaned.components(
-                    separatedBy:
-                        String(
-                            UnicodeScalar(30)
-                        )
-                )
-
-
-            let frontWorkspace =
-                sections.first?
-                    .trimmingCharacters(
-                        in: .whitespacesAndNewlines
-                    )
-                ?? ""
-
-
-            let rawNames =
-                sections.count > 1
-                ? sections[1]
-                : frontWorkspace
-
-
-            let names =
-                rawNames
-                    .components(
-                        separatedBy:
-                            String(
-                                UnicodeScalar(31)
-                            )
-                    )
-                    .map {
-                        $0.trimmingCharacters(
-                            in:
-                                .whitespacesAndNewlines
-                        )
-                    }
-                    .filter {
-                        !$0.isEmpty
-                    }
-
-
-            guard !names.isEmpty else {
-
-                availableWorkspaces = []
-                workspaceName = "Non détecté"
-                workspaceDetectionError =
-                    "Aucun workspace QLab ouvert."
-                return
-            }
-
-
-            availableWorkspaces = names
-
-
-            if names.contains(frontWorkspace) {
-
-                workspaceName =
-                    frontWorkspace
-
-            } else {
-
-                workspaceName =
-                    names[0]
-            }
-
-
-            let duplicateCount =
-                names.filter {
-                    $0 == workspaceName
-                }
-                .count
-
-
-            if duplicateCount > 1 {
-
-                workspaceDetectionError =
-                    "Plusieurs workspaces QLab portent le nom « \(workspaceName) ». Renomme-les pour éviter toute ambiguïté."
-            }
-
-
-            print(
-                "Workspaces QLab détectés :",
-                names.joined(
-                    separator: " | "
-                )
-            )
-
-            print(
-                "Workspace sélectionné :",
-                workspaceName
-            )
-
-
-        } catch {
-
-            availableWorkspaces = []
-            workspaceName = "Non détecté"
-
-            workspaceDetectionError =
-                "QLab n'est pas accessible."
-        }
+        Task { await qlabDiscovery.refresh(); applyDiscoveredWorkspaces() }
     }
 
+    private func applyDiscoveredWorkspaces() {
+        availableWorkspaces = qlabDiscovery.workspaces
+        workspaceDetectionError = qlabDiscovery.error
+        if workspaceName == "Non détecté", let first = availableWorkspaces.first, !isActive {
+            workspaceName = first
+        }
+        if availableWorkspaces.filter({ $0 == workspaceName }).count > 1 {
+            workspaceDetectionError = "Plusieurs workspaces portent ce nom. Renommez-les pour éviter toute ambiguïté."
+        } else if workspaceName != "Non détecté" && !availableWorkspaces.contains(workspaceName) {
+            workspaceDetectionError = "Le workspace sélectionné est fermé."
+        }
+    }
 
     private func progressLine(
         _ text: String,
