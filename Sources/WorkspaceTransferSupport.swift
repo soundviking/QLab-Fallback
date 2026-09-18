@@ -322,7 +322,8 @@ enum WorkspaceTransferSupport {
 
     static func extractArchive(
         _ archive: URL,
-        projectName: String
+        projectName: String,
+        root: URL? = nil
     ) throws -> URL {
 
         guard
@@ -334,7 +335,7 @@ enum WorkspaceTransferSupport {
         }
 
 
-        let root =
+        let root = root ??
             FileManager.default
                 .homeDirectoryForCurrentUser
                 .appendingPathComponent(

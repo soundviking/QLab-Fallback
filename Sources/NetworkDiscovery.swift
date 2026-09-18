@@ -4,6 +4,14 @@ import AppKit
 
 @MainActor
 final class NetworkDiscovery: ObservableObject {
+    let backupFolder: BackupFolderStore
+    var canChangeBackupFolder: Bool { runtimeRole != .backup && !workspaceTransferInProgress && !liveMirrorReloading }
+    func chooseBackupFolder() { _ = backupFolder.choose(locked: !canChangeBackupFolder) }
+    func prepareBackupFolder() -> Bool {
+        guard backupFolder.configured || backupFolder.choose(locked: !canChangeBackupFolder) else { return false }
+        return backupFolder.validate()
+    }
+
 
     @Published var networkInterfaces: [NWInterface] = []
     @Published var selectedNetworkInterface = UserDefaults.standard.string(forKey: "NetworkInterface") ?? "auto" {
@@ -345,8 +353,9 @@ final class NetworkDiscovery: ObservableObject {
     private let makeOSCClient: () -> QLabOSCClient
 
     private let runQLab: (String, [String]) async throws -> String
-    init(makeOSCClient: @escaping () -> QLabOSCClient = { QLabOSCClient() },
+    init(backupFolder: BackupFolderStore? = nil, makeOSCClient: @escaping () -> QLabOSCClient = { QLabOSCClient() },
          runQLab: @escaping (String, [String]) async throws -> String = MirrorQLab.run) {
+        self.backupFolder = backupFolder ?? BackupFolderStore()
         self.makeOSCClient = makeOSCClient
         self.runQLab = runQLab
         networkPathMonitor.pathUpdateHandler = { [weak self] path in
@@ -899,11 +908,11 @@ final class NetworkDiscovery: ObservableObject {
         workspaceTransferID = requestGeneration
         let session = connectedSessionID ?? ""
         let name = connectedWorkspace ?? ""
+        let backupRoot = backupFolder.url
         Task { [weak self] in
             let hashes = await Task.detached(priority: .userInitiated) {
                 do {
-                    let root = FileManager.default.homeDirectoryForCurrentUser
-                        .appendingPathComponent("Documents/QLab Fallback")
+                    let root = backupRoot
                     return try WorkspaceTransferSupport.availableMedia(in: root, cache: MirrorFiles.cacheRoot())
                 } catch {
                     MirrorDiagnostics.log("TRANSFERT inventaire local indisponible, copie complète : \(error.localizedDescription)")
@@ -1904,15 +1913,11 @@ final class NetworkDiscovery: ObservableObject {
             }
             stopBinaryTransfer()
 
-            let documentsURL =
-                FileManager.default
-                    .homeDirectoryForCurrentUser
-                    .appendingPathComponent(
-                        "Documents",
-                        isDirectory:
-                            true
-                    )
-
+            guard backupFolder.validate() else {
+                finishWorkspaceTransferWithError(backupFolder.error ?? "Dossier BACKUP inaccessible")
+                return
+            }
+            let documentsURL = backupFolder.url
 
             let availableDisk =
                 WorkspaceTransferSupport
@@ -2254,6 +2259,7 @@ final class NetworkDiscovery: ObservableObject {
             connectedWorkspace
         let installingID = workspaceTransferID
         let installingConnection = activeConnection
+        let backupRoot = backupFolder.url
 
 
         DispatchQueue.global(
@@ -2295,8 +2301,8 @@ final class NetworkDiscovery: ObservableObject {
                     try WorkspaceTransferSupport
                         .extractArchive(
                             archive,
-                            projectName:
-                                projectName
+                            projectName: projectName,
+                            root: backupRoot
                         )
 
 
@@ -5235,7 +5241,7 @@ final class NetworkDiscovery: ObservableObject {
         stop()
 
         runtimeRole = .backup
-
+        liveMirror.revisionsOverride = backupFolder.url.appendingPathComponent("Revisions", isDirectory: true)
 
         // Discovery does not require a local QLab workspace. In particular,
         // do not run synchronous AppleScript before starting the browser.
@@ -6120,8 +6126,7 @@ extension NetworkDiscovery {
         initialApplyTask = Task { [weak self] in
             guard let self else { return }
             do {
-                let receivedRoot = FileManager.default.homeDirectoryForCurrentUser
-                    .appendingPathComponent("Documents/QLab Fallback").path
+                let receivedRoot = self.backupFolder.url.path
                 _ = try await self.runQLab(MirrorQLab.openReceived, [manifest.workspaceID, workspaceURL.path, receivedRoot])
                 MirrorDiagnostics.log("TRANSFERT workspace ouvert et chemin vérifié : \(workspaceURL.path)")
             } catch {

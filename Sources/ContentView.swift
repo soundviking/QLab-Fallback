@@ -80,11 +80,16 @@ struct ContentView: View {
                     .frame(height: 10)
 
                 roleSelector
+                    .disabled(isActive)
 
                 Spacer()
                     .frame(height: 12)
 
                 workspacePanel
+                if selectedRole == .backup {
+                    BackupFolderView(store: networkDiscovery.backupFolder)
+                        .padding(.top, 10)
+                }
 
                 Spacer()
                     .frame(height: 10)
@@ -3936,6 +3941,7 @@ struct ContentView: View {
                 isActive = false
                 syncState = .ready
             } else {
+                if !isActive && selectedRole == .backup && !networkDiscovery.prepareBackupFolder() { return }
                 isActive.toggle()
 
                 if isActive {

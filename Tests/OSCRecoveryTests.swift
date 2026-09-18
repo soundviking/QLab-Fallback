@@ -200,7 +200,14 @@ final class FakeQLab: @unchecked Sendable {
         // Exercise the real manager callbacks, including an intentionally delayed old error.
         var openedPath = "", activeFixtureCue = false, reloadCount = 0
         let backupPlayback = PlaybackFixture(), masterPlayback = PlaybackFixture()
-        let manager = NetworkDiscovery(makeOSCClient: { QLabOSCClient(port: 55300, replyPort: 55301) }, runQLab: { script, args in
+        let folderSuite = "QLabOSCTests." + UUID().uuidString
+        let folderDefaults = UserDefaults(suiteName: folderSuite)!
+        let receiveRoot = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
+        try FileManager.default.createDirectory(at: receiveRoot, withIntermediateDirectories: true)
+        defer { folderDefaults.removePersistentDomain(forName: folderSuite); try? FileManager.default.removeItem(at: receiveRoot) }
+        let testFolder = BackupFolderStore(defaults: folderDefaults)
+        expect(testFolder.select(receiveRoot, locked: false), "Test receiver uses a private writable backup folder")
+        let manager = NetworkDiscovery(backupFolder: testFolder, makeOSCClient: { QLabOSCClient(port: 55300, replyPort: 55301) }, runQLab: { script, args in
             if let recovery = try backupPlayback.run(script, args) { return recovery }
             if script == MirrorQLab.openReceived { openedPath = args[1] }
             if script == MirrorQLab.idle && activeFixtureCue { throw MirrorFailure.invalid("Resynchronisation différée : cues BACKUP actives") }
