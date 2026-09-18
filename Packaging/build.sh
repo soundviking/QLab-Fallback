@@ -2,7 +2,7 @@
 set -euo pipefail
 BUILD_ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 cd "$BUILD_ROOT"
-mkdir -p Artifacts Resources
+mkdir -p Artifacts Resources Validation
 if [ -e Artifacts/QLab-Fallback-0.1.0-Build5.14-test-2Mac.pkg ]; then
   echo "Package existant : refus d’écraser. Choisir une nouvelle livraison." >&2
   exit 1
@@ -26,7 +26,8 @@ APP="$APP_ROOT/QLab Fallback Build5.14-test.app"
 mkdir -p "$APP/Contents/MacOS" "$APP/Contents/Resources"
 xcrun lipo -create Artifacts/QLabFallback-arm64 Artifacts/QLabFallback-x86_64 -output "$APP/Contents/MacOS/QLabFallback"
 cp Packaging/Info.plist "$APP/Contents/Info.plist"
-cp Resources/* "$APP/Contents/Resources/"
+cp Resources/*.png Resources/*.icns "$APP/Contents/Resources/"
+xcrun xcstringstool compile Resources/Localizable.xcstrings --output-directory "$APP/Contents/Resources/"
 codesign --force --sign - "$APP"
 codesign --verify --deep --strict --verbose=2 "$APP" > codesign-verify.log 2>&1
 pkgbuild --analyze --root "$APP_ROOT" Artifacts/components.plist

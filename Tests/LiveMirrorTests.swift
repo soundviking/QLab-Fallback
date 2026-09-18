@@ -103,10 +103,10 @@ struct LiveMirrorTests {
         try await deliver(wire("MIRROR_COMMIT"), delay: 800_000_000)
         expect(reloads == 1, "Retry reuses already opened revision")
         expect(sent.last?["type"] as? String == "MIRROR_ACK", "ACK after application and isolation")
-        expect(!e.contentReady, "Wait for MASTER acknowledgement confirmation")
+        expect(!e.contentReady, "Wait for PRIMARY acknowledgement confirmation")
         var status = wire("MIRROR_STATUS"); status["acknowledged"] = true
         try await deliver(status)
-        expect(e.synchronized && e.contentReady, "Latest ACK confirmed by MASTER")
+        expect(e.synchronized && e.contentReady, "Latest ACK confirmed by PRIMARY")
         await e.tick()
         expect(e.contentReady, "First periodic tick preserves session adopted from incoming offer")
         try await deliver(offer)
@@ -123,7 +123,7 @@ struct LiveMirrorTests {
         expect(sent.count == sentBefore, "Foreign session ignored")
         e.stop(); expect(!e.contentReady, "Stop clears applied state")
         // Two engines over an in-memory JSON wire exercise chunk flow control,
-        // ACK ordering, delta selection and MASTER version freshness together.
+        // ACK ordering, delta selection and PRIMARY version freshness together.
         let master = LiveMirrorEngine()
         master.workspaceSignature = {
             let text = try String(contentsOfFile: $0, encoding: .utf8)
@@ -178,7 +178,7 @@ struct LiveMirrorTests {
         wireLog.removeAll()
         try Data(repeating: 0x4B, count: 100000).write(to: audio)
         await master.tick()
-        expect(!master.synchronized, "MASTER edit immediately invalidates old ACK")
+        expect(!master.synchronized, "PRIMARY edit immediately invalidates old ACK")
         try await Task.sleep(nanoseconds: 2_000_000_000)
         await master.tick()
         try await Task.sleep(nanoseconds: 200_000_000)

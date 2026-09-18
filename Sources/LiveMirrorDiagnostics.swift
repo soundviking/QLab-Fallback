@@ -64,7 +64,7 @@ struct MirrorGoReadiness {
         if missedGo { return "GO manqué pendant reload : revalidation nécessaire" }
         if !enabled { return "HOT STANDBY désactivé" }
         if !oscConnected { return "QLab BACKUP non connecté en OSC" }
-        if !workspaceMatches { return "Workspace BACKUP différent du MASTER" }
+        if !workspaceMatches { return "Workspace BACKUP différent du PRIMARY" }
         if !outputIsolationDeclared { return "Sorties BACKUP non déclarées isolées" }
         if !armed { return "Exécution HOT STANDBY non armée" }
         if !audioIsolationVerified && !outputTest { return "Isolation audio non confirmée" }
@@ -77,11 +77,11 @@ enum MirrorTransferDisplay {
     static func status(master: Bool, connected: Bool, synchronized: Bool, ready: Bool,
                        transferring: Bool, error: String?, transferStatus: String) -> String {
         if error != nil { return "Validation du fallback échouée" }
-        if !connected { return master ? "En attente d’un BACKUP…" : "Recherche d’un MASTER…" }
+        if !connected { return master ? "En attente d’un BACKUP…" : "Recherche d’un PRIMARY…" }
         if transferring { return transferStatus }
         if synchronized { return "Synchronisé" }
         if ready { return master ? "BACKUP connecté · copie validée" : "Copie validée · miroir en attente" }
-        return master ? "BACKUP connecté · validation en attente" : "MASTER connecté · validation en attente"
+        return master ? "BACKUP connecté · validation en attente" : "PRIMARY connecté · validation en attente"
     }
 }
 

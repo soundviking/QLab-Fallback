@@ -24,11 +24,11 @@ extension NetworkDiscovery {
         if workspaceTransferInProgress { return "Transfert du projet en cours" }
         if liveMirrorReloading { return "Application du miroir en cours" }
         if failoverActive || failoverTakeoverLatched { return "Secours BACKUP actif" }
-        if masterReturning || returnInProgress { return "Retour sur le MASTER en cours" }
+        if masterReturning || returnInProgress { return "Retour sur le PRIMARY en cours" }
         if !qlabOSCConnected { return "QLab OSC non connecté" }
         if !liveMirrorSynchronized { return liveMirrorStatus }
         if isMasterRuntime { return lastError ?? workspaceTransferError }
-        if !heartbeatAlive { return "Heartbeat MASTER absent" }
+        if !heartbeatAlive { return "Heartbeat PRIMARY absent" }
         if backupOutputTestActive { return "Test de sortie BACKUP en cours" }
         if !backupAudioControlReady || !backupAudioIsolationConfirmed
             || !hotStandbyOutputIsolationConfirmed || !hotStandbyExecutionArmed {
@@ -89,7 +89,7 @@ struct MenuBarStatusLabel: View {
 
     var body: some View {
         Image(nsImage: MenuBarLabelRenderer.image(
-            text: networkDiscovery.menuBarStatusText,
+            text: L10n.text(networkDiscovery.menuBarStatusText),
             color: networkDiscovery.menuBarStatusNSColor))
             .renderingMode(.original)
             .accessibilityLabel(networkDiscovery.menuBarStatusText)
@@ -108,7 +108,7 @@ struct MenuBarStatusMenuContent: View {
             return "Disponible lorsque cette machine est activée en BACKUP"
         }
         if !networkDiscovery.isConnected {
-            return "MASTER non connecté"
+            return "PRIMARY non connecté"
         }
         if !networkDiscovery.qlabOSCConnected {
             return "QLab OSC non connecté"
@@ -120,7 +120,7 @@ struct MenuBarStatusMenuContent: View {
             return "Indisponible pendant le FAILOVER"
         }
         if networkDiscovery.returnInProgress || networkDiscovery.masterReturning {
-            return "Indisponible pendant le retour MASTER"
+            return "Indisponible pendant le retour PRIMARY"
         }
         if networkDiscovery.backupOutputTestActive {
             return "Indisponible pendant le test de sortie BACKUP"
@@ -141,10 +141,10 @@ struct MenuBarStatusMenuContent: View {
                 )
 
                 VStack(alignment: .leading, spacing: 1) {
-                    Text("QLab Fallback")
+                    AppText("QLab Fallback")
                         .font(.headline)
 
-                    Text(networkDiscovery.menuBarStatusText)
+                    AppText(networkDiscovery.menuBarStatusText)
                         .font(.system(size: 13, weight: .semibold))
                         .foregroundStyle(networkDiscovery.menuBarStatusColor)
                         .padding(.horizontal, 8)
@@ -172,15 +172,15 @@ struct MenuBarStatusMenuContent: View {
 
             Divider()
             if networkDiscovery.failoverActive {
-                Text("Secours actif — le BACKUP assure la lecture")
+                AppText("Secours actif — le BACKUP assure la lecture")
                     .font(.caption.weight(.semibold))
                     .foregroundStyle(.orange)
             }
             if let reason = networkDiscovery.menuBarSyncBlockReason {
-                Text(reason).font(.caption).foregroundStyle(.orange)
+                AppText(reason).font(.caption).foregroundStyle(.orange)
                     .fixedSize(horizontal: false, vertical: true)
             }
-            Text(networkDiscovery.liveMirrorStatus)
+            AppText(networkDiscovery.liveMirrorStatus)
                 .font(.caption)
                 .fixedSize(horizontal: false, vertical: true)
 
@@ -188,7 +188,7 @@ struct MenuBarStatusMenuContent: View {
                 Button {
                     networkDiscovery.requestLiveMirrorResynchronization()
                 } label: {
-                    Label(
+                    AppLabel(
                         networkDiscovery.liveMirrorManualResyncRunning
                             ? "Relance en cours…"
                             : "Relancer la synchronisation",
@@ -199,29 +199,29 @@ struct MenuBarStatusMenuContent: View {
                 .help(manualResyncAvailabilityText)
 
                 if !networkDiscovery.canRequestLiveMirrorResynchronization {
-                    Text(manualResyncAvailabilityText)
+                    AppText(manualResyncAvailabilityText)
                         .font(.caption2)
                         .foregroundStyle(.secondary)
                         .fixedSize(horizontal: false, vertical: true)
                 }
 
                 if let error = networkDiscovery.liveMirrorManualResyncError {
-                    Text(error)
+                    AppText(error)
                         .font(.caption2)
                         .foregroundStyle(.red)
                         .fixedSize(horizontal: false, vertical: true)
                 }
             }
             if networkDiscovery.isBrowsing {
-                Text("Synchronisation automatique")
-                Text("Le transfert peut se préparer pendant la lecture ; le rechargement QLab attend un moment sûr.")
+                AppText("Synchronisation automatique")
+                AppText("Le transfert peut se préparer pendant la lecture ; le rechargement QLab attend un moment sûr.")
                     .font(.caption2).foregroundStyle(.secondary)
             }
 
             if !networkDiscovery.recoveryStatus.isEmpty {
-                Text(networkDiscovery.recoveryStatus).font(.caption)
+                AppText(networkDiscovery.recoveryStatus).font(.caption)
                 if networkDiscovery.failoverActive {
-                    Button("Reprendre le son sur le MASTER") { networkDiscovery.requestMasterReturn() }
+                    Button("Reprendre le son sur le PRIMARY") { networkDiscovery.requestMasterReturn() }
                         .disabled(!networkDiscovery.masterReturnReady || networkDiscovery.returnInProgress)
                 }
             }
@@ -248,10 +248,10 @@ private struct StatusRow: View {
 
     var body: some View {
         HStack {
-            Text(title)
+            AppText(title)
                 .foregroundStyle(.secondary)
             Spacer()
-            Text(value)
+            AppText(value)
         }
         .font(.system(size: 12))
     }

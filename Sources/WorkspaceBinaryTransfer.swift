@@ -106,7 +106,7 @@ final class WorkspaceBinaryTransfer: @unchecked Sendable {
             // Four in-flight 1 MiB blocks keep TCP fed without loading the archive.
             while pending < 4 && queued < size {
                 let data = try file?.read(upToCount: Int(min(1024 * 1024, size - queued))) ?? Data()
-                guard !data.isEmpty else { invalid("Archive MASTER tronquée pendant l’envoi"); return }
+                guard !data.isEmpty else { invalid("Archive PRIMARY tronquée pendant l’envoi"); return }
                 queued += Int64(data.count); pending += 1
                 peer.send(content: data, completion: .contentProcessed { [weak self] error in
                     guard let self, !self.finished else { return }

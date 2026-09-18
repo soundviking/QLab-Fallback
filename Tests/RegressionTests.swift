@@ -61,8 +61,8 @@ struct RegressionTests {
             MirrorTransferDisplay.status(master: true, connected: connected, synchronized: synced, ready: ready,
                 transferring: transferring, error: error, transferStatus: "Vérification des targets")
         }
-        expect(status(false) == "En attente d’un BACKUP…", "Disconnected MASTER waits for BACKUP")
-        expect(status(true).contains("BACKUP connecté"), "Connected MASTER never claims no BACKUP")
+        expect(status(false) == "En attente d’un BACKUP…", "Disconnected PRIMARY waits for BACKUP")
+        expect(status(true).contains("BACKUP connecté"), "Connected PRIMARY never claims no BACKUP")
         expect(status(true, false, true).contains("copie validée"), "Validated transfer distinguished from full mirror sync")
         expect(status(true, true) == "Synchronisé", "Actual synchronized state displayed")
         expect(status(true, false, false, true) == "Vérification des targets", "Actual transfer phase displayed")
@@ -86,7 +86,7 @@ struct RegressionTests {
         let fm = FileManager.default
         let tmp = fm.temporaryDirectory.appendingPathComponent("qlab53-regression-" + UUID().uuidString)
         defer { try? fm.removeItem(at: tmp) }
-        let root = tmp.appendingPathComponent("MASTER Project"), cache = tmp.appendingPathComponent("objects")
+        let root = tmp.appendingPathComponent("PRIMARY Project"), cache = tmp.appendingPathComponent("objects")
         let external = tmp.appendingPathComponent("Outside é"), other = tmp.appendingPathComponent("Other")
         for dir in [root, cache, external, other] { try fm.createDirectory(at: dir, withIntermediateDirectories: true) }
         try Data("workspace fixture".utf8).write(to: root.appendingPathComponent("Show.qlab5"))
@@ -125,7 +125,7 @@ struct RegressionTests {
         for id in ["cue-1", "cue-1.5"] {
             let target = try MirrorFiles.safeURL(received.mediaTargets[id]!, under: receivedRoot)
             expect(try Data(contentsOf: target) == Data("cake audio".utf8), "Cake target points at received bytes for \(id)")
-            expect(!target.path.hasPrefix(root.path), "Relink does not use MASTER path")
+            expect(!target.path.hasPrefix(root.path), "Relink does not use PRIMARY path")
         }
         try Data("corruption".utf8).write(to: receivedRoot.appendingPathComponent(received.mediaTargets["cue-1"]!))
         rejects("Corrupt extracted media must block readiness") { try MirrorMedia.verify(received, root: receivedRoot) }
@@ -154,7 +154,7 @@ struct RegressionTests {
         try Data("changed local file".utf8).write(to: existing.appendingPathComponent("renamed cake.flac"))
         try WorkspaceTransferSupport.restoreAvailableMedia(m, root: deltaRoot, cache: backupCache)
         try MirrorMedia.verify(m, root: deltaRoot)
-        expect(true, "Full assembled project verified against MASTER after local reuse")
+        expect(true, "Full assembled project verified against PRIMARY after local reuse")
         let cakeHash = m.files.first { $0.path == m.mediaTargets["cue-1"]! }!.sha256
         let restored = deltaRoot.appendingPathComponent(m.mediaTargets["cue-1"]!)
         try Data("change target".utf8).write(to: restored)

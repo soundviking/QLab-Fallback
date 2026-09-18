@@ -33,7 +33,7 @@ enum WorkspaceTransferSupport {
         let root = sourceDirectory.resolvingSymlinksInPath().standardizedFileURL
         let workspace = try await MirrorQLab.run(MirrorQLab.locate, [workspaceID])
         guard workspace.hasPrefix(root.path + "/") else {
-            throw MirrorFailure.invalid("Workspace MASTER hors du dossier projet")
+            throw MirrorFailure.invalid("Workspace PRIMARY hors du dossier projet")
         }
         let rawTargets = try await MirrorQLab.run(MirrorQLab.targets, [workspaceID])
         let cache = try MirrorFiles.cacheRoot()
@@ -73,7 +73,7 @@ enum WorkspaceTransferSupport {
             }
             let object = cache.appendingPathComponent(file.sha256)
             guard try MirrorFiles.hashFile(object) == file.sha256 else {
-                throw MirrorFailure.invalid("Objet MASTER altéré : " + file.path)
+                throw MirrorFailure.invalid("Objet PRIMARY altéré : " + file.path)
             }
             let target = try MirrorFiles.safeURL(file.path, under: stage)
             try FileManager.default.createDirectory(at: target.deletingLastPathComponent(), withIntermediateDirectories: true)

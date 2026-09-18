@@ -2,6 +2,8 @@
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
 <dict>
+	<key>CFBundleDevelopmentRegion</key>
+	<string>fr</string>
 	<key>CFBundleDisplayName</key>
 	<string>QLab Fallback Build5.14-test</string>
 	<key>CFBundleExecutable</key>
@@ -10,6 +12,13 @@
 	<string>AppIcon</string>
 	<key>CFBundleIdentifier</key>
 	<string>fr.viking.qlabfallback.build514test</string>
+	<key>CFBundleLocalizations</key>
+	<array>
+		<string>fr</string>
+		<string>en</string>
+		<string>de</string>
+		<string>es</string>
+	</array>
 	<key>CFBundleName</key>
 	<string>QLab Fallback Build5.14-test</string>
 	<key>CFBundlePackageType</key>
@@ -21,7 +30,7 @@
 	<key>LSMinimumSystemVersion</key>
 	<string>14.0</string>
 	<key>NSAppleEventsUsageDescription</key>
-	<string>Build5.14-test sauvegarde le projet MASTER et applique les versions reçues dans QLab BACKUP, puis vérifie les médias et le playhead.</string>
+	<string>Build5.14-test sauvegarde le projet PRIMARY et applique les versions reçues dans QLab BACKUP, puis vérifie les médias et le playhead.</string>
 	<key>NSBonjourServices</key>
 	<array>
 		<string>_qlabfallback._tcp</string>
@@ -29,7 +38,7 @@
 	<key>NSHighResolutionCapable</key>
 	<true/>
 	<key>NSLocalNetworkUsageDescription</key>
-	<string>Build5.14-test synchronise le MASTER et le BACKUP sur le réseau local.</string>
+	<string>Build5.14-test synchronise le PRIMARY et le BACKUP sur le réseau local.</string>
 	<key>QLabFallbackBuildChannel</key>
 	<string>Build5.14-test optimized-resync manual-resync 2-Mac Test</string>
 </dict>

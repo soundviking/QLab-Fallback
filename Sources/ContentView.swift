@@ -5,12 +5,9 @@ import Network
 struct ContentView: View {
     @State private var advancedSettingsWindowController: NSWindowController?
 
+    @AppStorage("QLabFallback.Language") private var language = "system"
     @State private var showHelpGuide = false
     @State private var helpPage = 0
-    @State private var helpAnimationPulse = false
-
-    @State private var helpAnimationTask:
-        Task<Void, Never>?
 
     @AppStorage(
         "QLabFallback.OnboardingCompleted.v1"
@@ -71,7 +68,7 @@ struct ContentView: View {
                     FallbackLogo()
                         .frame(width: 58, height: 58)
 
-                    Text("QLab Fallback")
+                    AppText("QLab Fallback")
                         .font(.system(size: 24, weight: .semibold))
                         .foregroundStyle(.white)
                 }
@@ -123,7 +120,7 @@ struct ContentView: View {
                         .frame(height: 9)
 
                     VStack(alignment: .leading, spacing: 8) {
-                        Text("MASTER détecté")
+                        AppText("PRIMARY détecté")
                             .font(.system(size: 12, weight: .medium))
                             .foregroundStyle(.secondary)
 
@@ -147,7 +144,7 @@ struct ContentView: View {
                                         alignment: .leading,
                                         spacing: 2
                                     ) {
-                                        Text(machine.name)
+                                        AppText(machine.name)
                                             .font(
                                                 .system(
                                                     size: 14,
@@ -156,7 +153,7 @@ struct ContentView: View {
                                             )
                                             .foregroundStyle(.white)
 
-                                        Text("MASTER QLab Fallback")
+                                        AppText("PRIMARY QLab Fallback")
                                             .font(.system(size: 11))
                                             .foregroundStyle(.secondary)
                                     }
@@ -187,17 +184,17 @@ struct ContentView: View {
                         .frame(height: 9)
 
                     VStack(spacing: 14) {
-                        Text("Créer le fallback de")
+                        AppText("Créer le fallback de")
                             .font(.system(size: 14, weight: .medium))
                             .foregroundStyle(.secondary)
 
-                        Text(
+                        AppText(
                             "« \(networkDiscovery.connectedWorkspace ?? workspaceName) » ?"
                         )
                         .font(.system(size: 17, weight: .semibold))
                         .foregroundStyle(.white)
 
-                        Text("Le workspace et ses médias seront copiés sur cette machine pour préparer QLab en secours.")
+                        AppText("Le workspace et ses médias seront copiés sur cette machine pour préparer QLab en secours.")
                             .font(.system(size: 12))
                             .foregroundStyle(.secondary)
                             .multilineTextAlignment(.center)
@@ -215,7 +212,7 @@ struct ContentView: View {
                                 .requestWorkspaceTransfer()
 
                         } label: {
-                            Text("Créer le fallback")
+                            AppText("Créer le fallback")
                                 .font(.system(size: 14, weight: .semibold))
                                 .foregroundStyle(.white)
                                 .frame(maxWidth: 220, minHeight: 40)
@@ -233,7 +230,7 @@ struct ContentView: View {
                         .frame(height: 9)
 
                     VStack(spacing: 12) {
-                        Text(networkDiscovery.workspaceTransferStatus)
+                        AppText(networkDiscovery.workspaceTransferStatus)
                             .font(.system(size: 15, weight: .semibold))
                             .foregroundStyle(.white)
 
@@ -241,7 +238,7 @@ struct ContentView: View {
                             .progressViewStyle(.linear)
                             .frame(maxWidth: 340)
 
-                        Text("\(Int(networkDiscovery.workspaceTransferProgress * 100)) %")
+                        AppText("\(Int(networkDiscovery.workspaceTransferProgress * 100)) %")
                             .font(.system(size: 12, weight: .medium))
                             .foregroundStyle(.secondary)
 
@@ -253,7 +250,7 @@ struct ContentView: View {
 
                         } label: {
 
-                            Label(
+                            AppLabel(
                                 "Annuler le transfert",
                                 systemImage:
                                     "xmark.circle"
@@ -273,7 +270,7 @@ struct ContentView: View {
                             networkDiscovery
                                 .workspaceTransferError {
 
-                            Text(
+                            AppText(
                                 transferError
                             )
                             .font(.system(size: 11))
@@ -312,7 +309,7 @@ struct ContentView: View {
                 }
 
                 if let error = networkDiscovery.workspaceTransferError {
-                    Label("Validation du fallback échouée : " + error, systemImage: "exclamationmark.triangle.fill")
+                    AppLabel("Validation du fallback échouée : " + error, systemImage: "exclamationmark.triangle.fill")
                         .font(.caption)
                         .foregroundStyle(.red)
                         .textSelection(.enabled)
@@ -351,7 +348,7 @@ struct ContentView: View {
 
                         if networkDiscovery.backupOutputTestActive {
 
-                            Text("TEST SORTIE BACKUP")
+                            AppText("TEST SORTIE BACKUP")
                                 .font(
                                     .system(
                                         size: 12,
@@ -360,7 +357,7 @@ struct ContentView: View {
                                 )
                                 .foregroundStyle(.orange)
 
-                            Text(
+                            AppText(
                                 "MODE TEST ACTIF — \(networkDiscovery.backupOutputTestRemainingSeconds) s"
                             )
                             .font(
@@ -376,7 +373,7 @@ struct ContentView: View {
                                     .stopBackupOutputTest()
                             } label: {
 
-                                Text("Arrêter le test")
+                                AppText("Arrêter le test")
                                     .font(
                                         .system(
                                             size: 13,
@@ -412,7 +409,7 @@ struct ContentView: View {
                                         height: 8
                                     )
 
-                                Text("Sortie BACKUP isolée")
+                                AppText("Sortie BACKUP isolée")
                                     .font(
                                         .system(
                                             size: 12,
@@ -434,7 +431,7 @@ struct ContentView: View {
                                             "speaker.wave.2.fill"
                                     )
 
-                                    Text(
+                                    AppText(
                                         "Tester la sortie BACKUP"
                                     )
                                 }
@@ -472,7 +469,7 @@ struct ContentView: View {
                                 : 0.45
                             )
 
-                            Text(
+                            AppText(
                                 "Test audio local — durée 30 secondes"
                             )
                             .font(.system(size: 10))
@@ -482,7 +479,7 @@ struct ContentView: View {
                         if let testError =
                             networkDiscovery.backupOutputTestError {
 
-                            Text(testError)
+                            AppText(testError)
                                 .font(.system(size: 10))
                                 .foregroundStyle(.red)
                                 .multilineTextAlignment(.center)
@@ -518,7 +515,7 @@ struct ContentView: View {
 
                             VStack(spacing: 8) {
 
-                                Text("TEST SORTIE BACKUP")
+                                AppText("TEST SORTIE BACKUP")
                                     .font(
                                         .system(
                                             size: 12,
@@ -536,7 +533,7 @@ struct ContentView: View {
                                             height: 9
                                         )
 
-                                    Text(
+                                    AppText(
                                         "MODE TEST ACTIF"
                                     )
                                     .font(
@@ -548,7 +545,7 @@ struct ContentView: View {
                                     .foregroundStyle(.orange)
                                 }
 
-                                Text(
+                                AppText(
                                     "Arrêt automatique dans \(networkDiscovery.backupOutputTestRemainingSeconds) s"
                                 )
                                 .font(.system(size: 11))
@@ -559,7 +556,7 @@ struct ContentView: View {
                                         .stopBackupOutputTest()
                                 } label: {
 
-                                    Text("Arrêter le test")
+                                    AppText("Arrêter le test")
                                         .font(
                                             .system(
                                                 size: 13,
@@ -606,7 +603,7 @@ struct ContentView: View {
                                     if networkDiscovery.backupOutputMode
                                         == "FAILOVER" {
 
-                                        Text(
+                                        AppText(
                                             "SORTIE BACKUP — FAILOVER"
                                         )
                                         .font(
@@ -619,7 +616,7 @@ struct ContentView: View {
 
                                     } else {
 
-                                        Text(
+                                        AppText(
                                             "Sortie BACKUP isolée"
                                         )
                                         .font(
@@ -644,7 +641,7 @@ struct ContentView: View {
                                                 "speaker.wave.2.fill"
                                         )
 
-                                        Text(
+                                        AppText(
                                             "Tester la sortie BACKUP"
                                         )
                                     }
@@ -672,7 +669,7 @@ struct ContentView: View {
                                 }
                                 .buttonStyle(.plain)
 
-                                Text(
+                                AppText(
                                     "Test temporaire de 30 secondes"
                                 )
                                 .font(.system(size: 10))
@@ -683,7 +680,7 @@ struct ContentView: View {
                         if let testError =
                             networkDiscovery.backupOutputTestError {
 
-                            Text(testError)
+                            AppText(testError)
                                 .font(.system(size: 10))
                                 .foregroundStyle(.red)
                                 .multilineTextAlignment(.center)
@@ -694,11 +691,11 @@ struct ContentView: View {
 
                 if !networkDiscovery.recoveryStatus.isEmpty {
                     VStack(spacing: 8) {
-                        Text(networkDiscovery.recoveryStatus)
+                        AppText(networkDiscovery.recoveryStatus)
                             .font(.caption)
                             .multilineTextAlignment(.center)
                         if selectedRole == .backup && networkDiscovery.failoverActive {
-                            Button("Reprendre le son sur le MASTER") { networkDiscovery.requestMasterReturn() }
+                            Button("Reprendre le son sur le PRIMARY") { networkDiscovery.requestMasterReturn() }
                                 .buttonStyle(.borderedProminent)
                                 .disabled(!networkDiscovery.masterReturnReady || networkDiscovery.returnInProgress)
                         }
@@ -717,7 +714,7 @@ struct ContentView: View {
 
                         VStack(spacing: 6) {
 
-                            Label(
+                            AppLabel(
                                 "FAILOVER ACTIF",
                                 systemImage:
                                     "bolt.shield.fill"
@@ -736,7 +733,7 @@ struct ContentView: View {
                                 in: Capsule()
                             )
 
-                            Text(
+                            AppText(
                                 "Le BACKUP assure désormais la sortie audio"
                             )
                             .font(.system(size: 10))
@@ -751,7 +748,7 @@ struct ContentView: View {
                         networkDiscovery
                             .failoverActivationError {
 
-                        Text(error)
+                        AppText(error)
                             .font(.system(size: 10))
                             .foregroundStyle(.red)
                             .multilineTextAlignment(.center)
@@ -772,7 +769,7 @@ struct ContentView: View {
 
                         } label: {
 
-                            Label(
+                            AppLabel(
                                 "Réglages avancés",
                                 systemImage: "gearshape"
                             )
@@ -783,12 +780,11 @@ struct ContentView: View {
                         Button {
 
                             helpPage = 0
-                            helpAnimationPulse = false
                             showHelpGuide = true
 
                         } label: {
 
-                            Label(
+                            AppLabel(
                                 "Aide",
                                 systemImage:
                                     "questionmark.circle"
@@ -846,6 +842,11 @@ struct ContentView: View {
             value:
                 networkDiscovery.failoverActive
         )
+        .onReceive(NotificationCenter.default.publisher(for: .qlabShowHelp)) { note in
+            helpPage = note.object as? Int ?? 0
+            showHelpGuide = true
+        }
+        .environment(\.locale, Locale(identifier: L10n.languageCode(language)))
         .sheet(
             isPresented: $showHelpGuide
         ) {
@@ -901,14 +902,14 @@ struct ContentView: View {
                 spacing: 5
             ) {
                 HStack(spacing: 8) {
-                    Text("MASTER")
+                    AppText("PRIMARY")
                         .font(.caption)
                         .fontWeight(.semibold)
                         .foregroundStyle(.secondary)
 
                     Spacer(minLength: 8)
 
-                    Label(
+                    AppLabel(
                         networkDiscovery.liveMirrorSynchronized ? "Synchronisé" : "Miroir en attente",
                         systemImage: networkDiscovery.liveMirrorSynchronized ? "checkmark.circle.fill" : "arrow.triangle.2.circlepath"
                     )
@@ -917,11 +918,11 @@ struct ContentView: View {
                     .foregroundStyle(networkDiscovery.liveMirrorSynchronized ? .green : .orange)
                 }
 
-                Text("BACKUP connecté")
+                AppText("BACKUP connecté")
                     .font(.system(size: 15, weight: .semibold))
                     .foregroundStyle(.primary)
 
-                Text("Workspace : \(workspaceName)")
+                AppText("Workspace : \(workspaceName)")
                     .font(.caption)
                     .foregroundStyle(.secondary)
                     .lineLimit(1)
@@ -970,14 +971,14 @@ struct ContentView: View {
                 spacing: 5
             ) {
                 HStack(spacing: 8) {
-                    Text("BACKUP")
+                    AppText("BACKUP")
                         .font(.caption)
                         .fontWeight(.semibold)
                         .foregroundStyle(.secondary)
 
                     Spacer(minLength: 8)
 
-                    Label(
+                    AppLabel(
                         "En attente",
                         systemImage: "circle.dotted"
                     )
@@ -986,11 +987,11 @@ struct ContentView: View {
                     .foregroundStyle(.orange)
                 }
 
-                Text(networkDiscovery.isConnected ? "MASTER connecté · validation en attente" : "En attente du MASTER")
+                AppText(networkDiscovery.isConnected ? "PRIMARY connecté · validation en attente" : "En attente du PRIMARY")
                     .font(.system(size: 15, weight: .semibold))
                     .foregroundStyle(.primary)
 
-                Label(
+                AppLabel(
                     networkDiscovery.qlabOSCConnected
                         ? "QLab BACKUP connecté"
                         : "Connexion à QLab BACKUP…",
@@ -1049,14 +1050,14 @@ struct ContentView: View {
                 spacing: 5
             ) {
                 HStack(spacing: 8) {
-                    Text("BACKUP")
+                    AppText("BACKUP")
                         .font(.caption)
                         .fontWeight(.semibold)
                         .foregroundStyle(.secondary)
 
                     Spacer(minLength: 8)
 
-                    Label(
+                    AppLabel(
                         networkDiscovery.liveMirrorSynchronized ? "Synchronisé" : "Miroir en attente",
                         systemImage: networkDiscovery.liveMirrorSynchronized ? "checkmark.circle.fill" : "arrow.triangle.2.circlepath"
                     )
@@ -1065,14 +1066,14 @@ struct ContentView: View {
                     .foregroundStyle(networkDiscovery.liveMirrorSynchronized ? .green : .orange)
                 }
 
-                Text("MASTER connecté")
+                AppText("PRIMARY connecté")
                     .font(.system(size: 15, weight: .semibold))
                     .foregroundStyle(.primary)
 
                 if let masterName =
                     networkDiscovery.connectedMasterName {
 
-                    Label(
+                    AppLabel(
                         masterName,
                         systemImage: "desktopcomputer"
                     )
@@ -1084,7 +1085,7 @@ struct ContentView: View {
                 if let workspace =
                     networkDiscovery.connectedWorkspace {
 
-                    Text("Workspace : \(workspace)")
+                    AppText("Workspace : \(workspace)")
                         .font(.caption)
                         .foregroundStyle(.secondary)
                         .lineLimit(1)
@@ -1095,7 +1096,7 @@ struct ContentView: View {
                 Button {
                     networkDiscovery.requestLiveMirrorResynchronization()
                 } label: {
-                    Label(
+                    AppLabel(
                         networkDiscovery.liveMirrorManualResyncRunning
                             ? "Relance en cours…"
                             : "Relancer la synchronisation",
@@ -1108,7 +1109,7 @@ struct ContentView: View {
                 .help("Relance le Live Mirror sans réactiver le son du BACKUP. Si une cue joue ou est en pause, l’application attendra le prochain moment sûr.")
 
                 if let error = networkDiscovery.liveMirrorManualResyncError {
-                    Text(error)
+                    AppText(error)
                         .font(.caption2)
                         .foregroundStyle(.red)
                         .fixedSize(horizontal: false, vertical: true)
@@ -1150,12 +1151,12 @@ struct ContentView: View {
                 .frame(width: 18)
                 .foregroundStyle(color)
 
-            Text(title)
+            AppText(title)
                 .foregroundStyle(.primary)
 
             Spacer()
 
-            Text(value)
+            AppText(value)
                 .foregroundStyle(color)
                 .multilineTextAlignment(.trailing)
                 .lineLimit(2)
@@ -1175,17 +1176,17 @@ struct ContentView: View {
                     spacing: 3
                 ) {
 
-                    Text("QLab Fallback")
+                    AppText("QLab Fallback")
                         .font(.title2)
                         .fontWeight(.semibold)
 
-                    Text("Guide de démarrage")
+                    AppText("Guide de démarrage")
                         .foregroundStyle(.secondary)
                 }
 
                 Spacer()
 
-                Text("\(helpPage + 1) / 5")
+                AppText("\(helpPage + 1) / 5")
                     .font(.caption)
                     .foregroundStyle(.secondary)
             }
@@ -1209,12 +1210,12 @@ struct ContentView: View {
 
                     VStack(spacing: 10) {
 
-                        Text(helpGuideTitle)
+                        AppText(helpGuideTitle)
                             .font(.title2)
                             .fontWeight(.semibold)
 
 
-                        Text(helpGuideText)
+                        AppText(helpGuideText)
                             .font(.body)
                             .foregroundStyle(.secondary)
                             .multilineTextAlignment(.center)
@@ -1231,12 +1232,12 @@ struct ContentView: View {
 
                         HStack(spacing: 10) {
 
-                            Text(
+                            AppText(
                                 "Passcode QLab"
                             )
                             .foregroundStyle(.secondary)
 
-                            Text("1515")
+                            AppText("1515")
                                 .font(
                                     .system(
                                         .body,
@@ -1263,7 +1264,7 @@ struct ContentView: View {
 
                             } label: {
 
-                                Label(
+                                AppLabel(
                                     "Copier",
                                     systemImage:
                                         "doc.on.doc"
@@ -1311,7 +1312,6 @@ struct ContentView: View {
                             helpPage -= 1
                         }
 
-                        restartHelpAnimation()
                     }
                 }
 
@@ -1331,7 +1331,6 @@ struct ContentView: View {
                             helpPage += 1
                         }
 
-                        restartHelpAnimation()
                     }
                     .keyboardShortcut(
                         .defaultAction
@@ -1345,14 +1344,7 @@ struct ContentView: View {
                         showHelpGuide = false
                         helpPage = 0
 
-                        helpAnimationTask?
-                            .cancel()
 
-                        helpAnimationTask =
-                            nil
-
-                        helpAnimationPulse =
-                            false
                     }
                     .keyboardShortcut(
                         .defaultAction
@@ -1366,1135 +1358,10 @@ struct ContentView: View {
             width: 660,
             height: 610
         )
-        .onAppear {
-            restartHelpAnimation()
-        }
     }
 
 
-    private func restartHelpAnimation() {
-
-        helpAnimationTask?
-            .cancel()
-
-        helpAnimationTask =
-            nil
-
-
-        helpAnimationPulse =
-            false
-
-
-        helpAnimationTask =
-            Task { @MainActor in
-
-                // Petite pause pour laisser la page apparaître.
-                try? await Task.sleep(
-                    nanoseconds:
-                        600_000_000
-                )
-
-
-                guard !Task.isCancelled else {
-                    return
-                }
-
-
-                while !Task.isCancelled {
-
-                    withAnimation(
-                        .easeInOut(
-                            duration: 1.15
-                        )
-                    ) {
-
-                        helpAnimationPulse
-                            .toggle()
-                    }
-
-
-                    // L'utilisateur a environ trois secondes
-                    // pour lire chaque état avant la suite.
-                    try? await Task.sleep(
-                        nanoseconds:
-                            3_000_000_000
-                    )
-                }
-            }
-    }
-
-
-
-    @ViewBuilder
-    private var helpGuideVisual: some View {
-
-        switch helpPage {
-
-        // ----------------------------------------------------
-        // PAGE 1 — PRINCIPE MASTER / BACKUP
-        // ----------------------------------------------------
-
-        case 0:
-
-            helpScreenshotShell(
-                title:
-                    "QLab Fallback"
-            ) {
-
-                HStack(
-                    spacing: 22
-                ) {
-
-                    helpComputerCard(
-                        title:
-                            "MASTER",
-                        subtitle:
-                            "Spectacle principal",
-                        icon:
-                            "play.fill",
-                        color:
-                            .green
-                    )
-
-
-                    ZStack {
-
-                        Capsule()
-                            .fill(
-                                purple.opacity(
-                                    0.16
-                                )
-                            )
-                            .frame(
-                                width: 88,
-                                height: 5
-                            )
-
-
-                        Image(
-                            systemName:
-                                "arrow.right"
-                        )
-                        .font(
-                            .system(
-                                size: 20,
-                                weight: .bold
-                            )
-                        )
-                        .foregroundStyle(
-                            purple
-                        )
-                        .offset(
-                            x:
-                                helpAnimationPulse
-                                ? 22
-                                : -22
-                        )
-                    }
-                    .frame(
-                        width: 92,
-                        height: 48
-                    )
-
-
-                    helpComputerCard(
-                        title:
-                            "BACKUP",
-                        subtitle:
-                            "Secours prêt",
-                        icon:
-                            "shield.fill",
-                        color:
-                            helpAnimationPulse
-                            ? .green
-                            : .orange
-                    )
-                }
-                .padding(
-                    .vertical,
-                    16
-                )
-            }
-
-
-        // ----------------------------------------------------
-        // PAGE 2 — RÉGLAGES OSC QLAB
-        // ----------------------------------------------------
-
-        case 1:
-
-            helpScreenshotShell(
-                title:
-                    "QLab • Workspace Settings"
-            ) {
-
-                VStack(
-                    alignment: .leading,
-                    spacing: 12
-                ) {
-
-                    HStack {
-
-                        Label(
-                            "OSC Access",
-                            systemImage:
-                                "network"
-                        )
-                        .font(
-                            .system(
-                                size: 13,
-                                weight: .semibold
-                            )
-                        )
-
-
-                        Spacer()
-
-
-                        Text(
-                            "Port 53000"
-                        )
-                        .font(
-                            .system(
-                                size: 11,
-                                design:
-                                    .monospaced
-                            )
-                        )
-                        .foregroundStyle(
-                            .secondary
-                        )
-                    }
-
-
-                    HStack(
-                        spacing: 12
-                    ) {
-
-                        VStack(
-                            alignment: .leading,
-                            spacing: 5
-                        ) {
-
-                            Text(
-                                "Passcode"
-                            )
-                            .font(
-                                .caption
-                            )
-                            .foregroundStyle(
-                                .secondary
-                            )
-
-
-                            Text(
-                                "1515"
-                            )
-                            .font(
-                                .system(
-                                    size: 17,
-                                    weight: .bold,
-                                    design:
-                                        .monospaced
-                                )
-                            )
-                        }
-                        .padding(
-                            10
-                        )
-                        .frame(
-                            width: 115,
-                            alignment:
-                                .leading
-                        )
-                        .background(
-                            RoundedRectangle(
-                                cornerRadius: 9
-                            )
-                            .fill(
-                                Color.white
-                                    .opacity(0.05)
-                            )
-                        )
-
-
-                        HStack(
-                            spacing: 14
-                        ) {
-
-                            helpPermissionBadge(
-                                "View"
-                            )
-
-                            helpPermissionBadge(
-                                "Edit"
-                            )
-
-                            helpPermissionBadge(
-                                "Control"
-                            )
-                        }
-                        .padding(
-                            10
-                        )
-                        .background(
-                            RoundedRectangle(
-                                cornerRadius: 9
-                            )
-                            .fill(
-                                Color.green
-                                    .opacity(
-                                        helpAnimationPulse
-                                        ? 0.16
-                                        : 0.06
-                                    )
-                            )
-                        )
-                        .overlay {
-
-                            RoundedRectangle(
-                                cornerRadius: 9
-                            )
-                            .stroke(
-                                Color.green
-                                    .opacity(
-                                        helpAnimationPulse
-                                        ? 0.85
-                                        : 0.20
-                                    ),
-                                lineWidth: 1.5
-                            )
-                        }
-                    }
-
-
-                    helpAnimatedPointer(
-                        x:
-                            helpAnimationPulse
-                            ? 116
-                            : 64,
-                        y:
-                            4
-                    )
-                }
-                .padding(
-                    16
-                )
-            }
-
-
-        // ----------------------------------------------------
-        // PAGE 3 — CHOIX RÔLE / DÉTECTION / CRÉATION
-        // ----------------------------------------------------
-
-        case 2:
-
-            helpScreenshotShell(
-                title:
-                    "QLab Fallback"
-            ) {
-
-                VStack(
-                    spacing: 14
-                ) {
-
-                    HStack(
-                        spacing: 3
-                    ) {
-
-                        helpSegment(
-                            "MASTER",
-                            selected:
-                                !helpAnimationPulse
-                        )
-
-                        helpSegment(
-                            "BACKUP",
-                            selected:
-                                helpAnimationPulse
-                        )
-                    }
-
-
-                    HStack {
-
-                        Image(
-                            systemName:
-                                "doc.badge.gearshape"
-                        )
-                        .foregroundStyle(
-                            .secondary
-                        )
-
-
-                        Text(
-                            helpAnimationPulse
-                            ? "Qlab Backup"
-                            : "Workspace QLab"
-                        )
-                        .font(
-                            .system(
-                                size: 12,
-                                weight: .medium
-                            )
-                        )
-
-
-                        Spacer()
-
-
-                        Text(
-                            helpAnimationPulse
-                            ? "Détecté"
-                            : "Détecter"
-                        )
-                        .font(
-                            .system(
-                                size: 11,
-                                weight: .semibold
-                            )
-                        )
-                        .foregroundStyle(
-                            helpAnimationPulse
-                            ? .green
-                            : .secondary
-                        )
-                    }
-                    .padding(
-                        .horizontal,
-                        13
-                    )
-                    .frame(
-                        height: 42
-                    )
-                    .background(
-                        RoundedRectangle(
-                            cornerRadius: 10
-                        )
-                        .fill(
-                            Color.white
-                                .opacity(0.05)
-                        )
-                    )
-
-
-                    HStack {
-
-                        Spacer()
-
-
-                        Text(
-                            "Créer le fallback"
-                        )
-                        .font(
-                            .system(
-                                size: 12,
-                                weight: .semibold
-                            )
-                        )
-                        .padding(
-                            .horizontal,
-                            20
-                        )
-                        .frame(
-                            height: 36
-                        )
-                        .background(
-                            RoundedRectangle(
-                                cornerRadius: 8
-                            )
-                            .fill(
-                                purple
-                                    .opacity(
-                                        helpAnimationPulse
-                                        ? 1.0
-                                        : 0.62
-                                    )
-                            )
-                        )
-                        .overlay {
-
-                            RoundedRectangle(
-                                cornerRadius: 8
-                            )
-                            .stroke(
-                                Color.white
-                                    .opacity(
-                                        helpAnimationPulse
-                                        ? 0.30
-                                        : 0.06
-                                    ),
-                                lineWidth: 1
-                            )
-                        }
-
-
-                        Spacer()
-                    }
-                }
-                .padding(
-                    16
-                )
-                .overlay(
-                    alignment:
-                        .bottomTrailing
-                ) {
-
-                    helpAnimatedPointer(
-                        x:
-                            helpAnimationPulse
-                            ? -150
-                            : -225,
-                        y:
-                            -22
-                    )
-                }
-            }
-
-
-        // ----------------------------------------------------
-        // PAGE 4 — TRANSFERT RÉEL
-        // ----------------------------------------------------
-
-        case 3:
-
-            helpScreenshotShell(
-                title:
-                    "Création du fallback"
-            ) {
-
-                VStack(
-                    spacing: 14
-                ) {
-
-                    HStack {
-
-                        Label(
-                            helpAnimationPulse
-                            ? "Vérification SHA-256…"
-                            : "Copie du workspace et des médias…",
-                            systemImage:
-                                helpAnimationPulse
-                                ? "checkmark.shield"
-                                : "arrow.left.arrow.right"
-                        )
-                        .font(
-                            .system(
-                                size: 12,
-                                weight: .semibold
-                            )
-                        )
-
-
-                        Spacer()
-
-
-                        Text(
-                            helpAnimationPulse
-                            ? "100 %"
-                            : "42 %"
-                        )
-                        .font(
-                            .system(
-                                size: 11,
-                                weight: .bold,
-                                design:
-                                    .monospaced
-                            )
-                        )
-                    }
-
-
-                    GeometryReader {
-                        geometry in
-
-                        ZStack(
-                            alignment:
-                                .leading
-                        ) {
-
-                            Capsule()
-                                .fill(
-                                    Color.white
-                                        .opacity(0.08)
-                                )
-
-
-                            Capsule()
-                                .fill(
-                                    helpAnimationPulse
-                                    ? Color.green
-                                    : purple
-                                )
-                                .frame(
-                                    width:
-                                        geometry.size.width
-                                        * (
-                                            helpAnimationPulse
-                                            ? 1.0
-                                            : 0.42
-                                        )
-                                )
-                        }
-                    }
-                    .frame(
-                        height: 8
-                    )
-
-
-                    HStack(
-                        spacing: 20
-                    ) {
-
-                        helpMetric(
-                            "Projet",
-                            value:
-                                "1,24 Go"
-                        )
-
-                        helpMetric(
-                            "Vitesse",
-                            value:
-                                "82 Mo/s"
-                        )
-
-                        helpMetric(
-                            "Espace",
-                            value:
-                                "118 Go"
-                        )
-                    }
-
-
-                    HStack(
-                        spacing: 7
-                    ) {
-
-                        Image(
-                            systemName:
-                                helpAnimationPulse
-                                ? "checkmark.circle.fill"
-                                : "clock"
-                        )
-                        .foregroundStyle(
-                            helpAnimationPulse
-                            ? .green
-                            : .orange
-                        )
-
-
-                        Text(
-                            helpAnimationPulse
-                            ? "Fallback vérifié et prêt"
-                            : "Transfert sécurisé en cours"
-                        )
-                        .font(
-                            .system(
-                                size: 11,
-                                weight: .medium
-                            )
-                        )
-                    }
-                }
-                .padding(
-                    16
-                )
-            }
-
-
-        // ----------------------------------------------------
-        // PAGE 5 — VOYANT SYSTÈME / EXPLOITATION
-        // ----------------------------------------------------
-
-        default:
-
-            helpScreenshotShell(
-                title:
-                    "Barre de menus macOS"
-            ) {
-
-                VStack(
-                    spacing: 16
-                ) {
-
-                    HStack(
-                        spacing: 17
-                    ) {
-
-                        Image(
-                            systemName:
-                                "speaker.wave.2.fill"
-                        )
-                        .foregroundStyle(
-                            .secondary
-                        )
-
-
-                        Image(
-                            systemName:
-                                "wifi"
-                        )
-                        .foregroundStyle(
-                            .secondary
-                        )
-
-
-                        ZStack {
-
-                            Circle()
-                                .fill(
-                                    (
-                                        helpAnimationPulse
-                                        ? Color.green
-                                        : Color.orange
-                                    )
-                                    .opacity(0.30)
-                                )
-                                .frame(
-                                    width: 30,
-                                    height: 30
-                                )
-
-
-                            Circle()
-                                .stroke(
-                                    helpAnimationPulse
-                                    ? Color.green
-                                    : Color.orange,
-                                    lineWidth: 1.6
-                                )
-                                .frame(
-                                    width: 30,
-                                    height: 30
-                                )
-
-
-                            Image(
-                                systemName:
-                                    helpAnimationPulse
-                                    ? "checkmark.circle.fill"
-                                    : "circle.dotted"
-                            )
-                            .foregroundStyle(
-                                helpAnimationPulse
-                                ? .green
-                                : .orange
-                            )
-                        }
-                        .shadow(
-                            color:
-                                (
-                                    helpAnimationPulse
-                                    ? Color.green
-                                    : Color.orange
-                                )
-                                .opacity(0.60),
-                            radius: 7
-                        )
-
-
-                        Image(
-                            systemName:
-                                "battery.75percent"
-                        )
-                        .foregroundStyle(
-                            .secondary
-                        )
-
-
-                        Text(
-                            "16:59"
-                        )
-                        .font(
-                            .system(
-                                size: 11,
-                                weight: .medium
-                            )
-                        )
-                    }
-
-
-                    HStack(
-                        spacing: 8
-                    ) {
-
-                        Circle()
-                            .fill(
-                                helpAnimationPulse
-                                ? Color.green
-                                : Color.orange
-                            )
-                            .frame(
-                                width: 8,
-                                height: 8
-                            )
-
-
-                        Text(
-                            helpAnimationPulse
-                            ? "BACKUP connecté • système prêt"
-                            : "En attente du BACKUP"
-                        )
-                        .font(
-                            .system(
-                                size: 12,
-                                weight: .semibold
-                            )
-                        )
-                        .foregroundStyle(
-                            helpAnimationPulse
-                            ? .green
-                            : .orange
-                        )
-                    }
-
-
-                    Text(
-                        "Un coup d’œil à la barre de menus suffit pour contrôler l’état de la redondance."
-                    )
-                    .font(
-                        .system(
-                            size: 11
-                        )
-                    )
-                    .foregroundStyle(
-                        .secondary
-                    )
-                    .multilineTextAlignment(
-                        .center
-                    )
-                }
-                .padding(
-                    18
-                )
-            }
-        }
-    }
-
-
-    // ========================================================
-    // COMPOSANTS DES MINI-CAPTURES
-    // ========================================================
-
-    private func helpScreenshotShell<Content: View>(
-        title: String,
-        @ViewBuilder content:
-            () -> Content
-    ) -> some View {
-
-        VStack(
-            spacing: 0
-        ) {
-
-            HStack(
-                spacing: 7
-            ) {
-
-                Circle()
-                    .fill(
-                        Color.red.opacity(0.85)
-                    )
-                    .frame(
-                        width: 9,
-                        height: 9
-                    )
-
-                Circle()
-                    .fill(
-                        Color.orange.opacity(0.85)
-                    )
-                    .frame(
-                        width: 9,
-                        height: 9
-                    )
-
-                Circle()
-                    .fill(
-                        Color.green.opacity(0.85)
-                    )
-                    .frame(
-                        width: 9,
-                        height: 9
-                    )
-
-
-                Spacer()
-
-
-                Text(
-                    title
-                )
-                .font(
-                    .system(
-                        size: 10,
-                        weight: .medium
-                    )
-                )
-                .foregroundStyle(
-                    .secondary
-                )
-
-
-                Spacer()
-
-
-                Color.clear
-                    .frame(
-                        width: 41,
-                        height: 1
-                    )
-            }
-            .padding(
-                .horizontal,
-                12
-            )
-            .frame(
-                height: 30
-            )
-            .background(
-                Color.white
-                    .opacity(0.035)
-            )
-
-
-            Divider()
-                .opacity(0.25)
-
-
-            content()
-                .frame(
-                    maxWidth: .infinity,
-                    minHeight: 150
-                )
-                .background(
-                    Color.black
-                        .opacity(0.18)
-                )
-        }
-        .frame(
-            width: 520
-        )
-        .background(
-            .thinMaterial,
-            in:
-                RoundedRectangle(
-                    cornerRadius: 15,
-                    style: .continuous
-                )
-        )
-        .overlay {
-
-            RoundedRectangle(
-                cornerRadius: 15,
-                style: .continuous
-            )
-            .stroke(
-                Color.white
-                    .opacity(0.09),
-                lineWidth: 1
-            )
-        }
-        .shadow(
-            color:
-                Color.black.opacity(0.30),
-            radius: 18,
-            y: 8
-        )
-    }
-
-
-    private func helpComputerCard(
-        title: String,
-        subtitle: String,
-        icon: String,
-        color: Color
-    ) -> some View {
-
-        VStack(
-            spacing: 8
-        ) {
-
-            ZStack {
-
-                RoundedRectangle(
-                    cornerRadius: 12
-                )
-                .fill(
-                    color.opacity(0.13)
-                )
-                .frame(
-                    width: 72,
-                    height: 55
-                )
-
-
-                Image(
-                    systemName:
-                        icon
-                )
-                .font(
-                    .system(
-                        size: 24,
-                        weight: .semibold
-                    )
-                )
-                .foregroundStyle(
-                    color
-                )
-            }
-
-
-            Text(title)
-                .font(
-                    .system(
-                        size: 12,
-                        weight: .bold
-                    )
-                )
-
-
-            Text(subtitle)
-                .font(
-                    .system(
-                        size: 10
-                    )
-                )
-                .foregroundStyle(
-                    .secondary
-                )
-        }
-        .frame(
-            width: 135
-        )
-    }
-
-
-    private func helpPermissionBadge(
-        _ title: String
-    ) -> some View {
-
-        HStack(
-            spacing: 5
-        ) {
-
-            Image(
-                systemName:
-                    "checkmark.circle.fill"
-            )
-            .foregroundStyle(
-                .green
-            )
-
-
-            Text(title)
-                .font(
-                    .system(
-                        size: 11,
-                        weight: .medium
-                    )
-                )
-        }
-    }
-
-
-    private func helpSegment(
-        _ title: String,
-        selected: Bool
-    ) -> some View {
-
-        Text(title)
-            .font(
-                .system(
-                    size: 11,
-                    weight: .semibold
-                )
-            )
-            .foregroundStyle(
-                selected
-                ? Color.white
-                : Color.secondary
-            )
-            .frame(
-                width: 96,
-                height: 30
-            )
-            .background(
-                RoundedRectangle(
-                    cornerRadius: 7
-                )
-                .fill(
-                    selected
-                    ? purple
-                    : Color.white
-                        .opacity(0.05)
-                )
-            )
-    }
-
-
-    private func helpMetric(
-        _ title: String,
-        value: String
-    ) -> some View {
-
-        VStack(
-            spacing: 3
-        ) {
-
-            Text(title)
-                .font(
-                    .system(
-                        size: 10
-                    )
-                )
-                .foregroundStyle(
-                    .secondary
-                )
-
-
-            Text(value)
-                .font(
-                    .system(
-                        size: 11,
-                        weight: .semibold
-                    )
-                )
-        }
-    }
-
-
-    private func helpAnimatedPointer(
-        x: CGFloat,
-        y: CGFloat
-    ) -> some View {
-
-        Image(
-            systemName:
-                "cursorarrow.rays"
-        )
-        .font(
-            .system(
-                size: 22,
-                weight: .semibold
-            )
-        )
-        .foregroundStyle(
-            .white
-        )
-        .shadow(
-            color:
-                purple.opacity(0.9),
-            radius:
-                helpAnimationPulse
-                ? 10
-                : 3
-        )
-        .offset(
-            x: x,
-            y: y
-        )
-    }
-
+    private var helpGuideVisual: some View { TutorialDiagram(page: helpPage) }
 
     private var helpGuideTitle: String {
 
@@ -2507,7 +1374,7 @@ struct ContentView: View {
             return "Préparer QLab"
 
         case 2:
-            return "Choisir MASTER et BACKUP"
+            return "Choisir PRIMARY et BACKUP"
 
         case 3:
             return "Tout doit être vert"
@@ -2518,64 +1385,7 @@ struct ContentView: View {
     }
 
 
-    private var helpGuideText: String {
-
-        switch helpPage {
-
-        case 0:
-
-            return """
-            Le MASTER exécute le spectacle.
-
-            Build5 transfère les changements du projet. Leur application attend que le BACKUP soit inactif et isolé. Le statut Synchronisé exige une version appliquée et acquittée ; la reprise automatique dépend aussi du playhead et de l’isolation audio.
-            """
-
-
-        case 1:
-
-            return """
-            Sur le MASTER, ouvre le workspace QLab à sécuriser.
-
-            Active OSC sur le port 53000, utilise le passcode 1515 et autorise View, Edit et Control.
-
-            QLab Fallback détecte automatiquement le dossier projet. Pour copier les médias, ceux-ci doivent se trouver dans le dossier projet du spectacle.
-            """
-
-
-        case 2:
-
-            return """
-            Sur le Mac principal, sélectionne MASTER. Sur le Mac de secours, sélectionne BACKUP.
-
-            Le BACKUP découvre automatiquement le MASTER sur le réseau local.
-
-            Clique « Créer le fallback » : l'application contrôle d'abord l'espace disque disponible, puis le workspace et ses médias sont transférés et vérifiés par empreinte SHA-256. La copie reçue est ensuite ouverte automatiquement dans QLab.
-            """
-
-
-        case 3:
-
-            return """
-            Avant le spectacle, contrôle cette liste.
-
-            QLab, le réseau, le heartbeat et le playhead doivent être synchronisés.
-
-            Sur le BACKUP, les sorties doivent rester ISOLATED et le HOT STANDBY doit être ARMÉ.
-            """
-
-
-        default:
-
-            return """
-            Si le MASTER disparaît, le BACKUP passe en FAILOVER et ouvre ses sorties audio.
-
-            Le retour du MASTER ne referme jamais automatiquement les sorties du BACKUP.
-
-            Après stabilisation, utilise « Reprendre le son sur le MASTER » dans les Réglages avancés.
-            """
-        }
-    }
-
+    private var helpGuideText: String { L10n.text("help.body.\(helpPage)") }
 
     private var advancedSettingsView: some View {
 
@@ -2590,13 +1400,13 @@ struct ContentView: View {
                     spacing: 3
                 ) {
 
-                    Text("Réglages avancés")
+                    AppText("Réglages avancés")
                         .font(.title2)
                         .fontWeight(.semibold)
 
-                    Text(
+                    AppText(
                         selectedRole == .master
-                        ? "État technique du MASTER"
+                        ? "État technique du PRIMARY"
                         : "Tests, diagnostic et état technique du BACKUP"
                     )
                     .font(.callout)
@@ -2617,7 +1427,7 @@ struct ContentView: View {
 
                 } label: {
 
-                    Label(
+                    AppLabel(
                         "Aide",
                         systemImage:
                             "questionmark.circle"
@@ -2646,17 +1456,17 @@ struct ContentView: View {
                 GroupBox("Réseau et débit") {
                     VStack(alignment: .leading, spacing: 10) {
                         Picker("Connexion", selection: $networkDiscovery.selectedNetworkInterface) {
-                            Text("Automatique — priorité Ethernet").tag("auto")
+                            AppText("Automatique — priorité Ethernet").tag("auto")
                             ForEach(networkDiscovery.networkInterfaces, id: \.name) { card in
-                                Text((card.type == .wiredEthernet ? "Ethernet" : "Wi-Fi") + " · " + card.name).tag(card.name)
+                                AppText((card.type == .wiredEthernet ? "Ethernet" : "Wi-Fi") + " · " + card.name).tag(card.name)
                             }
                             if networkDiscovery.selectedNetworkInterface != "auto" && !networkDiscovery.networkInterfaces.contains(where: { $0.name == networkDiscovery.selectedNetworkInterface }) {
-                                Text("Indisponible · " + networkDiscovery.selectedNetworkInterface).tag(networkDiscovery.selectedNetworkInterface)
+                                AppText("Indisponible · " + networkDiscovery.selectedNetworkInterface).tag(networkDiscovery.selectedNetworkInterface)
                             }
                         }
                         .disabled(networkDiscovery.networkChoiceLocked)
-                        Text(networkDiscovery.activeNetworkDescription).font(.callout)
-                        Text("Choisir avant d’activer Fallback. Une carte imposée ne bascule pas automatiquement sur le Wi-Fi.")
+                        AppText(networkDiscovery.activeNetworkDescription).font(.callout)
+                        AppText("Choisir avant d’activer Fallback. Une carte imposée ne bascule pas automatiquement sur le Wi-Fi.")
                             .font(.caption).foregroundStyle(.secondary)
                         if networkDiscovery.networkSpeedRunning {
                             HStack {
@@ -2667,8 +1477,8 @@ struct ContentView: View {
                             Button("Tester le débit entre les deux Mac") { networkDiscovery.startNetworkSpeedTest() }
                                 .disabled(!networkDiscovery.canTestNetworkSpeed)
                         }
-                        Text(networkDiscovery.networkSpeedStatus).font(.callout)
-                        Text("À lancer sur le BACKUP, cues arrêtées. Mesure réseau en mémoire, sans copier ni modifier le workspace (32 Mio, 30 secondes maximum).")
+                        AppText(networkDiscovery.networkSpeedStatus).font(.callout)
+                        AppText("À lancer sur le BACKUP, cues arrêtées. Mesure réseau en mémoire, sans copier ni modifier le workspace (32 Mio, 30 secondes maximum).")
                             .font(.caption).foregroundStyle(.secondary)
                     }
                     .frame(maxWidth: .infinity, alignment: .leading)
@@ -2682,7 +1492,7 @@ struct ContentView: View {
                         spacing: 11
                     ) {
 
-                        Label(
+                        AppLabel(
                             "Transfert du projet QLab",
                             systemImage:
                                 "arrow.left.arrow.right.circle.fill"
@@ -2693,7 +1503,7 @@ struct ContentView: View {
                         if selectedRole == .master {
 
                             advancedStatusRow(
-                                "Dossier projet MASTER",
+                                "Dossier projet PRIMARY",
                                 value:
                                     networkDiscovery
                                         .masterProjectFolderPath
@@ -2833,7 +1643,7 @@ struct ContentView: View {
 
                                 } label: {
 
-                                    Label(
+                                    AppLabel(
                                         "Afficher le projet dans le Finder",
                                         systemImage:
                                             "folder"
@@ -2847,7 +1657,7 @@ struct ContentView: View {
                                 networkDiscovery
                                     .workspaceTransferError {
 
-                                Text(error)
+                                AppText(error)
                                     .font(.caption)
                                     .foregroundStyle(.red)
                                     .fixedSize(
@@ -2870,7 +1680,7 @@ struct ContentView: View {
                             Button {
                                 networkDiscovery.requestLiveMirrorResynchronization()
                             } label: {
-                                Label(
+                                AppLabel(
                                     networkDiscovery.liveMirrorManualResyncRunning
                                         ? "Relance en cours…"
                                         : "Relancer la synchronisation",
@@ -2881,7 +1691,7 @@ struct ContentView: View {
                             .disabled(!networkDiscovery.canRequestLiveMirrorResynchronization)
 
                             if let error = networkDiscovery.liveMirrorManualResyncError {
-                                Text(error)
+                                AppText(error)
                                     .font(.caption)
                                     .foregroundStyle(.red)
                                     .fixedSize(horizontal: false, vertical: true)
@@ -2889,8 +1699,8 @@ struct ContentView: View {
                         }
 
 
-                        Text(
-                            "Le dossier projet complet est copié depuis le MASTER puis vérifié par SHA-256. Une copie existante n'est jamais écrasée."
+                        AppText(
+                            "Le dossier projet complet est copié depuis le PRIMARY puis vérifié par SHA-256. Une copie existante n'est jamais écrasée."
                         )
                         .font(.caption)
                         .foregroundStyle(.secondary)
@@ -2909,14 +1719,14 @@ struct ContentView: View {
                         spacing: 12
                     ) {
 
-                        Label(
+                        AppLabel(
                             "Connexion QLab",
                             systemImage: "key.fill"
                         )
                         .font(.headline)
 
 
-                        Text(
+                        AppText(
                             "Passcode OSC commun aux workspaces utilisés avec QLab Fallback."
                         )
                         .font(.caption)
@@ -2925,7 +1735,7 @@ struct ContentView: View {
 
                         OSCPasscodeEditor()
 
-                        Text(
+                        AppText(
                             "QLab accepte un passcode OSC de 4 chiffres. Valeur recommandée pour Fallback : 1515."
                         )
                         .font(.caption2)
@@ -2948,7 +1758,7 @@ struct ContentView: View {
                                 : .secondary
                             )
 
-                            Text(
+                            AppText(
                                 "Authentification : "
                                 + networkDiscovery
                                     .qlabAuthenticationStatus
@@ -2957,7 +1767,7 @@ struct ContentView: View {
                         }
 
 
-                        Text(
+                        AppText(
                             networkDiscovery
                                 .qlabPasscodeStatus
                         )
@@ -2967,10 +1777,10 @@ struct ContentView: View {
 
                 } label: {
 
-                    Text("Sécurité OSC QLab")
+                    AppText("Sécurité OSC QLab")
                 }
                 // ====================================================
-                // MASTER
+                // PRIMARY
                 // ====================================================
 
                 if selectedRole == .master {
@@ -2981,7 +1791,7 @@ struct ContentView: View {
 
                             advancedStatusRow(
                                 "Rôle",
-                                value: "MASTER",
+                                value: "PRIMARY",
                                 systemImage:
                                     "desktopcomputer"
                             )
@@ -3065,7 +1875,7 @@ struct ContentView: View {
                             )
 
                             advancedStatusRow(
-                                "Heartbeat MASTER",
+                                "Heartbeat PRIMARY",
                                 value:
                                     networkDiscovery
                                         .isConnected
@@ -3084,7 +1894,7 @@ struct ContentView: View {
 
                     } label: {
 
-                        Text("MASTER")
+                        AppText("PRIMARY")
                     }
 
 
@@ -3165,7 +1975,7 @@ struct ContentView: View {
 
                     } label: {
 
-                        Text("Synchronisation QLab")
+                        AppText("Synchronisation QLab")
                     }
 
 
@@ -3176,11 +1986,11 @@ struct ContentView: View {
                             spacing: 10
                         ) {
 
-                            Label(
+                            AppLabel(
                                 networkDiscovery
                                     .isConnected
-                                ? "Le MASTER transmet actuellement les événements au BACKUP."
-                                : "Le MASTER attend la connexion d'un BACKUP.",
+                                ? "Le PRIMARY transmet actuellement les événements au BACKUP."
+                                : "Le PRIMARY attend la connexion d'un BACKUP.",
                                 systemImage:
                                     networkDiscovery
                                         .isConnected
@@ -3194,7 +2004,7 @@ struct ContentView: View {
                                 : Color.secondary
                             )
 
-                            Text(
+                            AppText(
                                 "Le contrôle audio, l'isolation des sorties et le HOT STANDBY sont gérés uniquement sur la machine BACKUP."
                             )
                             .font(.caption)
@@ -3208,7 +2018,7 @@ struct ContentView: View {
 
                     } label: {
 
-                        Text("Fonctionnement")
+                        AppText("Fonctionnement")
                     }
 
 
@@ -3226,7 +2036,7 @@ struct ContentView: View {
                                     networkDiscovery
                                         .qlabOSCError {
 
-                                    Label(
+                                    AppLabel(
                                         error,
                                         systemImage:
                                             "exclamationmark.triangle.fill"
@@ -3237,7 +2047,7 @@ struct ContentView: View {
                                     networkDiscovery
                                         .lastError {
 
-                                    Label(
+                                    AppLabel(
                                         error,
                                         systemImage:
                                             "network.slash"
@@ -3254,7 +2064,7 @@ struct ContentView: View {
 
                         } label: {
 
-                            Text("Diagnostic")
+                            AppText("Diagnostic")
                         }
                     }
 
@@ -3272,14 +2082,14 @@ struct ContentView: View {
                             spacing: 12
                         ) {
 
-                            Label(
+                            AppLabel(
                                 "Test de bascule",
                                 systemImage:
                                     "wrench.and.screwdriver.fill"
                             )
                             .font(.headline)
 
-                            Text(
+                            AppText(
                                 "Ces commandes sont réservées aux tests et à la maintenance."
                             )
                             .font(.caption)
@@ -3293,7 +2103,7 @@ struct ContentView: View {
                                     spacing: 10
                                 ) {
 
-                                    Label(
+                                    AppLabel(
                                         "FAILOVER ACTIF",
                                         systemImage:
                                             "bolt.shield.fill"
@@ -3315,7 +2125,7 @@ struct ContentView: View {
                                             ProgressView()
                                                 .controlSize(.small)
 
-                                            Text(
+                                            AppText(
                                                 "Ré-isolation du BACKUP en cours…"
                                             )
                                             .font(.caption)
@@ -3331,8 +2141,8 @@ struct ContentView: View {
 
                                         } label: {
 
-                                            Label(
-                                                "Reprendre le son sur le MASTER",
+                                            AppLabel(
+                                                "Reprendre le son sur le PRIMARY",
                                                 systemImage:
                                                     "speaker.slash.fill"
                                             )
@@ -3346,7 +2156,7 @@ struct ContentView: View {
                                     }
 
 
-                                    Text(
+                                    AppText(
                                         "Le FAILOVER ne sera désactivé qu'après confirmation réelle du MUTE par QLab."
                                     )
                                     .font(.caption)
@@ -3363,8 +2173,8 @@ struct ContentView: View {
 
                                 } label: {
 
-                                    Label(
-                                        "Simuler une perte du MASTER",
+                                    AppLabel(
+                                        "Simuler une perte du PRIMARY",
                                         systemImage:
                                             "exclamationmark.arrow.triangle.2.circlepath"
                                     )
@@ -3383,7 +2193,7 @@ struct ContentView: View {
                                         .backupAudioIsolationConfirmed
                                 )
 
-                                Text(
+                                AppText(
                                     "Déclenche la vraie chaîne de bascule audio du BACKUP."
                                 )
                                 .font(.caption)
@@ -3395,7 +2205,7 @@ struct ContentView: View {
                                 networkDiscovery
                                     .failoverActivationError {
 
-                                Label(
+                                AppLabel(
                                     error,
                                     systemImage:
                                         "exclamationmark.triangle.fill"
@@ -3409,7 +2219,7 @@ struct ContentView: View {
                                 networkDiscovery
                                     .failoverDeactivationError {
 
-                                Label(
+                                AppLabel(
                                     error,
                                     systemImage:
                                         "exclamationmark.triangle.fill"
@@ -3423,7 +2233,7 @@ struct ContentView: View {
 
                     } label: {
 
-                        Text("Outils de test")
+                        AppText("Outils de test")
                     }
 
 
@@ -3545,7 +2355,7 @@ struct ContentView: View {
 
                     } label: {
 
-                        Text("QLab et audio")
+                        AppText("QLab et audio")
                     }
 
 
@@ -3554,7 +2364,7 @@ struct ContentView: View {
                         VStack(spacing: 11) {
 
                             advancedStatusRow(
-                                "MASTER",
+                                "PRIMARY",
                                 value:
                                     networkDiscovery
                                         .isConnected
@@ -3586,7 +2396,7 @@ struct ContentView: View {
                             )
 
                             advancedStatusRow(
-                                "Liaison MASTER",
+                                "Liaison PRIMARY",
                                 value:
                                     networkDiscovery
                                         .linkLost
@@ -3640,7 +2450,7 @@ struct ContentView: View {
 
                     } label: {
 
-                        Text("Redondance")
+                        AppText("Redondance")
                     }
 
 
@@ -3659,7 +2469,7 @@ struct ContentView: View {
                             )
 
                             advancedStatusRow(
-                                "Workspace MASTER",
+                                "Workspace PRIMARY",
                                 value:
                                     networkDiscovery
                                         .connectedWorkspace
@@ -3669,7 +2479,7 @@ struct ContentView: View {
                             )
 
                             advancedStatusRow(
-                                "Machine MASTER",
+                                "Machine PRIMARY",
                                 value:
                                     networkDiscovery
                                         .connectedMasterName
@@ -3709,7 +2519,7 @@ struct ContentView: View {
 
                     } label: {
 
-                        Text("Informations techniques")
+                        AppText("Informations techniques")
                     }
 
 
@@ -3731,7 +2541,7 @@ struct ContentView: View {
                                     networkDiscovery
                                         .qlabOSCError {
 
-                                    Label(
+                                    AppLabel(
                                         error,
                                         systemImage:
                                             "exclamationmark.triangle.fill"
@@ -3742,7 +2552,7 @@ struct ContentView: View {
                                     networkDiscovery
                                         .backupAudioControlError {
 
-                                    Label(
+                                    AppLabel(
                                         error,
                                         systemImage:
                                             "speaker.badge.exclamationmark.fill"
@@ -3753,7 +2563,7 @@ struct ContentView: View {
                                     networkDiscovery
                                         .failoverBlockedReason {
 
-                                    Label(
+                                    AppLabel(
                                         error,
                                         systemImage:
                                             "shield.slash.fill"
@@ -3764,7 +2574,7 @@ struct ContentView: View {
                                     networkDiscovery
                                         .lastError {
 
-                                    Label(
+                                    AppLabel(
                                         error,
                                         systemImage:
                                             "network.slash"
@@ -3781,15 +2591,15 @@ struct ContentView: View {
 
                         } label: {
 
-                            Text("Diagnostic")
+                            AppText("Diagnostic")
                         }
                     }
                 }
 
 
-                Text(
+                AppText(
                     selectedRole == .master
-                    ? "Le MASTER supervise QLab et transmet les événements au BACKUP."
+                    ? "Le PRIMARY supervise QLab et transmet les événements au BACKUP."
                     : "Ces informations sont destinées aux tests et au diagnostic. En exploitation normale, l'écran principal suffit."
                 )
                 .font(.caption)
@@ -3831,9 +2641,7 @@ struct ContentView: View {
         }
 
         let hostedView = AnyView(
-            advancedSettingsView
-                .environmentObject(networkDiscovery)
-                .preferredColorScheme(.dark)
+            LanguageScope { advancedSettingsView.environmentObject(networkDiscovery).preferredColorScheme(.dark) }
         )
 
         let hostingController = NSHostingController(
@@ -3844,7 +2652,7 @@ struct ContentView: View {
             contentViewController: hostingController
         )
 
-        window.title = "Réglages avancés"
+        window.title = L10n.text("Réglages avancés")
         window.styleMask = [
             .titled,
             .closable,
@@ -3902,7 +2710,7 @@ struct ContentView: View {
         }
 
         return selectedRole == .master
-            ? "Activer le MASTER"
+            ? "Activer le PRIMARY"
             : "Activer le BACKUP"
     }
 
@@ -3965,7 +2773,7 @@ struct ContentView: View {
                 }
             }
         } label: {
-            Label(
+            AppLabel(
                 mainActionTitle,
                 systemImage: mainActionIcon
             )
@@ -3989,17 +2797,12 @@ struct ContentView: View {
             alignment: .leading,
             spacing: 7
         ) {
-            Text("Rôle de cette machine")
-                .font(.caption)
-                .fontWeight(.medium)
-                .foregroundStyle(.secondary)
-
             Picker(
-                "Rôle de cette machine",
+                "PRIMARY / BACKUP",
                 selection: $selectedRole
             ) {
                 ForEach(Role.allCases) { role in
-                    Text(role.rawValue)
+                    AppText(role.rawValue)
                         .tag(role)
                 }
             }
@@ -4021,7 +2824,7 @@ struct ContentView: View {
 
             HStack {
 
-                Text("Workspace QLab")
+                AppText("Workspace QLab")
                     .font(
                         .system(
                             size: 13,
@@ -4034,7 +2837,7 @@ struct ContentView: View {
 
                 if availableWorkspaces.count > 1 {
 
-                    Text(
+                    AppText(
                         "\(availableWorkspaces.count) ouverts"
                     )
                     .font(.caption)
@@ -4086,7 +2889,7 @@ struct ContentView: View {
 
                                 HStack {
 
-                                    Text(name)
+                                    AppText(name)
 
                                     if workspaceName == name {
 
@@ -4103,7 +2906,7 @@ struct ContentView: View {
 
                         HStack(spacing: 7) {
 
-                            Text(workspaceName)
+                            AppText(workspaceName)
                                 .font(
                                     .system(
                                         size: 15,
@@ -4130,7 +2933,7 @@ struct ContentView: View {
 
                 } else {
 
-                    Text(workspaceName)
+                    AppText(workspaceName)
                         .font(
                             .system(
                                 size: 15,
@@ -4151,7 +2954,7 @@ struct ContentView: View {
 
                 } label: {
 
-                    Label(
+                    AppLabel(
                         availableWorkspaces.isEmpty
                             ? "Détecter"
                             : "Actualiser",
@@ -4186,7 +2989,7 @@ struct ContentView: View {
 
             if let error = workspaceDetectionError {
 
-                Label(
+                AppLabel(
                     error,
                     systemImage:
                         "exclamationmark.triangle.fill"
@@ -4237,7 +3040,7 @@ struct ContentView: View {
                 : Color.secondary
             )
 
-            Text(text)
+            AppText(text)
                 .font(.system(size: 12))
                 .foregroundStyle(.secondary)
         }
@@ -4296,7 +3099,7 @@ struct ContentView: View {
                 .font(.system(size: 10, weight: .semibold))
                 .foregroundStyle(statusDisplayColor)
 
-            Text(statusText)
+            AppText(statusText)
                 .font(.system(size: 12, weight: .semibold))
                 .foregroundStyle(.secondary)
                 .lineLimit(1)
@@ -4339,7 +3142,7 @@ struct FallbackLogo: View {
 
 
 enum Role: String, CaseIterable, Identifiable {
-    case master = "MASTER"
+    case master = "PRIMARY"
     case backup = "BACKUP"
 
     var id: String { rawValue }

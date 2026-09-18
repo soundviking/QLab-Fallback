@@ -4,7 +4,7 @@ import Foundation
         let fm = FileManager.default
         let tmp = fm.temporaryDirectory.appendingPathComponent("qlab55-reuse-" + UUID().uuidString)
         defer { try? fm.removeItem(at: tmp) }
-        let master = tmp.appendingPathComponent("MASTER"), backup = tmp.appendingPathComponent("BACKUP")
+        let master = tmp.appendingPathComponent("PRIMARY"), backup = tmp.appendingPathComponent("BACKUP")
         let cache = tmp.appendingPathComponent("cache"), backupCache = tmp.appendingPathComponent("backup-cache")
         for d in [master, backup, cache, backupCache] { try fm.createDirectory(at: d, withIntermediateDirectories: true) }
         let source = FileManager.default.homeDirectoryForCurrentUser.appendingPathComponent("QLab-Fallback-Test-Media/CAKE - I Will Survive.flac")

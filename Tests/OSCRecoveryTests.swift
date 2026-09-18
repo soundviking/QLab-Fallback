@@ -158,7 +158,7 @@ final class FakeQLab: @unchecked Sendable {
         try await Task.sleep(nanoseconds: 300_000_000)
         expect(results.count("connected") == 1, "Health probes do not repeatedly reauthenticate an active session")
         server.emit("/qlab/event/workspace/go/uniqueID", [.string("CAKE-ID")])
-        await waitFor("MASTER GO event decoded with cue identity") { results.count("go:CAKE-ID") == 1 }
+        await waitFor("PRIMARY GO event decoded with cue identity") { results.count("go:CAKE-ID") == 1 }
         expect(client.executeHotStandbyGo(cueID: "CAKE-ID"), "BACKUP GO accepted only when connected")
         await waitFor("BACKUP emits exact cue/start without moving playhead") { server.count("/workspace/TEST-ID/cue_id/CAKE-ID/start") == 1 }
         server.configure(present: false)
@@ -234,7 +234,7 @@ final class FakeQLab: @unchecked Sendable {
         let master = NetworkDiscovery(makeOSCClient: { QLabOSCClient(port: 55320, replyPort: 55321) },
             runQLab: { script, args in try masterPlayback.run(script, args) ?? "" })
         master.testStartMasterOSC()
-        await waitFor("Second simulated QLab MASTER connects") { master.qlabOSCConnected }
+        await waitFor("Second simulated QLab PRIMARY connects") { master.qlabOSCConnected }
         let tcp = try NWListener(using: ResponsivenessPolicy.tcpParameters(), on: 55310)
         tcp.newConnectionHandler = { c in
             c.start(queue: .global())
@@ -251,7 +251,7 @@ final class FakeQLab: @unchecked Sendable {
         let beforeGo = server.count("/workspace/TEST-ID/cue_id/CAKE-ID/start")
         manager.testInvalidateCachedMatch()
         master.testSendGo()
-        await waitFor("MASTER serialization → TCP → BACKUP readiness → OSC cue/start") { server.count("/workspace/TEST-ID/cue_id/CAKE-ID/start") == beforeGo + 1 }
+        await waitFor("PRIMARY serialization → TCP → BACKUP readiness → OSC cue/start") { server.count("/workspace/TEST-ID/cue_id/CAKE-ID/start") == beforeGo + 1 }
         func frame(_ id: String, _ seq: Int, age: Double = 0, session: String = "TEST-SESSION") -> [String: Any] {
             ["type": "MASTER_EVENT", "sessionID": session, "eventID": id, "sequence": seq,
              "eventType": "GO", "cueID": "CAKE-ID", "monotonicTime": ProcessInfo.processInfo.systemUptime - age]
@@ -273,7 +273,7 @@ final class FakeQLab: @unchecked Sendable {
         manager.testValidateIdentity("DIFFERENT-WORKSPACE-ID")
         manager.hotStandbyBlockedReason = nil
         master.testFrame(frame("wrong-id", 4))
-        await waitFor("Different UUID is refused even with same workspace name") { manager.hotStandbyBlockedReason == "Workspace BACKUP différent du MASTER" }
+        await waitFor("Different UUID is refused even with same workspace name") { manager.hotStandbyBlockedReason == "Workspace BACKUP différent du PRIMARY" }
         expect(server.count("/workspace/TEST-ID/cue_id/CAKE-ID/start") == beforeGo + 2, "Identity protection remains effective")
         let fixtureRoot = FileManager.default.temporaryDirectory.appendingPathComponent("qlab57-readiness-" + UUID().uuidString)
         defer { try? FileManager.default.removeItem(at: fixtureRoot) }
@@ -289,7 +289,7 @@ final class FakeQLab: @unchecked Sendable {
         await waitFor("Binary control negotiation reaches receiver SHA-256 verification", seconds: 15) {
             manager.workspaceTransferError?.contains("SHA-256") == true
         }
-        await waitFor("Receiver hash failure reaches MASTER", seconds: 5) {
+        await waitFor("Receiver hash failure reaches PRIMARY", seconds: 5) {
             master.workspaceTransferError?.contains("SHA-256") == true
         }
         expect(manager.workspaceTransferBytes == Int64(binarySize), "Real manager binary transfer writes complete announced archive")
@@ -322,26 +322,26 @@ final class FakeQLab: @unchecked Sendable {
         await waitFor("Production reload callbacks authenticate, isolate, restore playhead and ACK") { mirrorFrames.contains { $0["type"] as? String == "MIRROR_ACK" } }
         expect(reloadCount == 1 && !manager.failoverReady, "Local ACK alone cannot make failover ready")
         offer["type"] = "MIRROR_STATUS"; offer["acknowledged"] = true; mirror.enqueue(offer)
-        await waitFor("Ready before MASTER failure after matching confirmation") { manager.failoverReady }
+        await waitFor("Ready before PRIMARY failure after matching confirmation") { manager.failoverReady }
         expect(!manager.failoverPending && manager.backupAudioIsolationConfirmed, "Standby readiness never unmutes audio")
         manager.backupOutputTestActive = true; manager.refreshLocalQLabState()
         expect(!manager.failoverReady, "Output test blocks failover readiness")
         manager.backupOutputTestActive = false; manager.refreshLocalQLabState()
         expect(manager.failoverReady, "Readiness recovers when output test ends")
         offer["acknowledged"] = false; mirror.enqueue(offer)
-        await waitFor("Withdrawal of MASTER confirmation blocks a healthy isolated BACKUP") { !manager.failoverReady }
+        await waitFor("Withdrawal of PRIMARY confirmation blocks a healthy isolated BACKUP") { !manager.failoverReady }
         offer["acknowledged"] = true; mirror.enqueue(offer)
-        await waitFor("Matching MASTER confirmation restores readiness") { manager.failoverReady }
+        await waitFor("Matching PRIMARY confirmation restores readiness") { manager.failoverReady }
         // Selection is remote control only, never a GO.
         master.testMatchSession(manifest.session)
         manager.testValidateIdentity("TEST-ID")
         master.sendPlayheadUpdate(cueID: "CUE-ID")
-        await waitFor("Initial MASTER selection reaches BACKUP") { manager.backupTargetPlayheadID == "CUE-ID" && manager.playheadSyncReady }
+        await waitFor("Initial PRIMARY selection reaches BACKUP") { manager.backupTargetPlayheadID == "CUE-ID" && manager.playheadSyncReady }
         let goCount = server.count("/workspace/TEST-ID/cue_id/CAKE-ID/start")
         let remoteSelectionBegan = ProcessInfo.processInfo.systemUptime
         server.select("REMOTE-CUE")
-        await waitFor("BACKUP selection remotely moves MASTER") { master.masterPlayheadID == "REMOTE-CUE" }
-        await waitFor("MASTER confirms remote selection to BACKUP") { manager.backupTargetPlayheadID == "REMOTE-CUE" && manager.playheadSyncReady }
+        await waitFor("BACKUP selection remotely moves PRIMARY") { master.masterPlayheadID == "REMOTE-CUE" }
+        await waitFor("PRIMARY confirms remote selection to BACKUP") { manager.backupTargetPlayheadID == "REMOTE-CUE" && manager.playheadSyncReady }
         let remoteSelectionTime = ProcessInfo.processInfo.systemUptime - remoteSelectionBegan
         print("MEASURE: BACKUP selection round trip \(Int(remoteSelectionTime * 1000)) ms on loopback")
         expect(remoteSelectionTime < 0.15, "BACKUP remote selection has no 150 ms hold")
@@ -350,8 +350,8 @@ final class FakeQLab: @unchecked Sendable {
         expect(selectedCount == 1 && masterServer.count("/workspace/TEST-ID/playheadID/REMOTE-CUE") == 1, "Remote confirmation produces no selection echo loop")
         server.select("CUE-ID")
         await waitFor("Rapid BACKUP return to previous selection works") { master.masterPlayheadID == "CUE-ID" }
-        masterServer.select("MASTER-CUE")
-        await waitFor("MASTER user selection still moves BACKUP") { manager.backupTargetPlayheadID == "MASTER-CUE" }
+        masterServer.select("PRIMARY-CUE")
+        await waitFor("PRIMARY user selection still moves BACKUP") { manager.backupTargetPlayheadID == "PRIMARY-CUE" }
         expect(server.count("/workspace/TEST-ID/cue_id/CAKE-ID/start") == goCount, "Bidirectional selection never executes GO")
         backupPlayback.active = true
         manager.startNetworkSpeedTest()
@@ -359,13 +359,13 @@ final class FakeQLab: @unchecked Sendable {
         backupPlayback.active = false
         masterPlayback.active = true
         manager.startNetworkSpeedTest()
-        await waitFor("Speed test refuses active MASTER cues") { !manager.networkSpeedRunning && manager.networkSpeedStatus.contains("Cues actives") }
+        await waitFor("Speed test refuses active PRIMARY cues") { !manager.networkSpeedRunning && manager.networkSpeedStatus.contains("Cues actives") }
         masterPlayback.active = false
         manager.startNetworkSpeedTest()
         await waitFor("RAM-only network speed test completes through control protocol", seconds: 12) {
             !manager.networkSpeedRunning && manager.networkSpeedStatus.contains("Débit réseau")
         }
-        await waitFor("Measured throughput reported on MASTER", seconds: 3) { !master.networkSpeedRunning && master.networkSpeedStatus.contains("Débit réseau") }
+        await waitFor("Measured throughput reported on PRIMARY", seconds: 3) { !master.networkSpeedRunning && master.networkSpeedStatus.contains("Débit réseau") }
         print("MEASURE: " + manager.networkSpeedStatus)
         expect(manager.heartbeatAlive && !manager.failoverActive, "Benchmark preserves control link and does not trigger takeover")
         expect(server.count("/workspace/TEST-ID/cue_id/CAKE-ID/start") == goCount, "Network benchmark never starts a cue")
@@ -384,7 +384,7 @@ final class FakeQLab: @unchecked Sendable {
         }
         masterServer.setManualMute(2)
         let beforeInvalid = masterServer.count("/workspace/TEST-ID/playheadID/INVALID-CUE")
-        manager.testFrame(["type": "BACKUP_SELECTION", "sessionID": "OTHER", "workspaceID": "TEST-ID", "cueID": "INVALID-CUE", "baseCueID": "MASTER-CUE", "requestID": UUID().uuidString])
+        manager.testFrame(["type": "BACKUP_SELECTION", "sessionID": "OTHER", "workspaceID": "TEST-ID", "cueID": "INVALID-CUE", "baseCueID": "PRIMARY-CUE", "requestID": UUID().uuidString])
         manager.testFrame(["type": "BACKUP_SELECTION", "sessionID": manifest.session, "workspaceID": "TEST-ID", "cueID": "INVALID-CUE", "baseCueID": "STALE", "requestID": UUID().uuidString])
         try await Task.sleep(nanoseconds: 300_000_000)
         expect(masterServer.count("/workspace/TEST-ID/playheadID/INVALID-CUE") == beforeInvalid, "Foreign session and conflicting stale BACKUP selection are refused")
@@ -408,30 +408,30 @@ final class FakeQLab: @unchecked Sendable {
         expect(detectionTime < 1.7, "QLab loss to confirmed output is below former 2–3 seconds")
         masterServer.silence(false)
         expect(manager.failoverTakeoverLatched, "Takeover is latched")
-        await waitFor("Returning MASTER restores active playback silently", seconds: 12) { master.masterReturnReady && manager.masterReturnReady }
-        expect(masterServer.isMuted() && !server.isMuted(), "BACKUP remains audible while returned MASTER stays muted")
+        await waitFor("Returning PRIMARY restores active playback silently", seconds: 12) { master.masterReturnReady && manager.masterReturnReady }
+        expect(masterServer.isMuted() && !server.isMuted(), "BACKUP remains audible while returned PRIMARY stays muted")
         expect(masterPlayback.active && abs(masterPlayback.value() - backupPlayback.value()) < 1, "Running cue position restored within verification tolerance")
-        expect(masterPlayback.playhead == "BACKUP-ACTIVE-CUE", "Returned MASTER follows authoritative BACKUP playhead")
+        expect(masterPlayback.playhead == "BACKUP-ACTIVE-CUE", "Returned PRIMARY follows authoritative BACKUP playhead")
         manager.testDisconnect(); master.testDisconnect()
         let reconnected = NWConnection(host: "127.0.0.1", port: 55310, using: ResponsivenessPolicy.tcpParameters())
         reconnected.start(queue: .global())
         await waitFor("TCP peer reconnects after takeover") { results.count("tcp-master") == 2 }
         manager.testReconnectBackup(reconnected)
-        master.testFrame(["type": "WELCOME", "protocolVersion": 1, "sessionID": "TEST-SESSION", "machineName": "Returned MASTER", "workspace": "Fixture"])
+        master.testFrame(["type": "WELCOME", "protocolVersion": 1, "sessionID": "TEST-SESSION", "machineName": "Returned PRIMARY", "workspace": "Fixture"])
         await waitFor("WELCOME reconnect preserves BACKUP authority", seconds: 8) { manager.isConnected && manager.connectedSessionID == "TEST-SESSION" && manager.failoverTakeoverLatched }
-        expect(manager.failoverActive && !server.isMuted(), "Reconnected MASTER never automatically takes BACKUP sound")
+        expect(manager.failoverActive && !server.isMuted(), "Reconnected PRIMARY never automatically takes BACKUP sound")
         await waitFor("Silent return recovers after a new TCP session", seconds: 12) { master.masterReturnReady && manager.masterReturnReady }
         backupPlayback.playhead = "BACKUP-NEXT-CUE"
-        await waitFor("BACKUP selection remains authoritative after MASTER returns", seconds: 8) { masterPlayback.playhead == "BACKUP-NEXT-CUE" && manager.masterReturnReady }
+        await waitFor("BACKUP selection remains authoritative after PRIMARY returns", seconds: 8) { masterPlayback.playhead == "BACKUP-NEXT-CUE" && manager.masterReturnReady }
         backupPlayback.failSnapshot = true
         await waitFor("Unsupported live state disables manual return", seconds: 8) { !manager.masterReturnReady }
         expect(!server.isMuted(), "Invalid recovery leaves the active BACKUP audible")
         backupPlayback.failSnapshot = false
         await waitFor("Recovery retries after transient failure", seconds: 8) { manager.masterReturnReady && master.masterReturnReady }
         backupPlayback.elapsed = backupPlayback.value(); backupPlayback.paused = true
-        await waitFor("Paused BACKUP state reaches silent MASTER", seconds: 8) { masterPlayback.paused && master.masterReturnReady }
+        await waitFor("Paused BACKUP state reaches silent PRIMARY", seconds: 8) { masterPlayback.paused && master.masterReturnReady }
         backupPlayback.paused = false; backupPlayback.stamp = ProcessInfo.processInfo.systemUptime
-        await waitFor("Resumed BACKUP state reaches silent MASTER", seconds: 8) { !masterPlayback.paused && master.masterReturnReady }
+        await waitFor("Resumed BACKUP state reaches silent PRIMARY", seconds: 8) { !masterPlayback.paused && master.masterReturnReady }
         backupPlayback.playhead = "CHANGED-JUST-BEFORE-HANDOFF"
         manager.requestMasterReturn()
         await waitFor("Changed BACKUP cancels handoff without muting active output", seconds: 8) { !manager.returnInProgress && manager.failoverActive }
@@ -439,8 +439,8 @@ final class FakeQLab: @unchecked Sendable {
         await waitFor("Cancelled handoff resumes silent alignment", seconds: 8) { masterPlayback.playhead == backupPlayback.playhead && manager.masterReturnReady && !master.returnInProgress }
         manager.requestMasterReturn()
         await waitFor("Manual return completes coordinated audio handoff", seconds: 12) { !manager.failoverActive && !master.masterReturning && manager.backupAudioIsolationConfirmed }
-        expect(!masterServer.isMuted() && server.isMuted(), "MASTER only unmutes after BACKUP mute verification")
-        expect(masterServer.hasMute(2) && !masterServer.hasMute(1), "Manual MASTER mute is preserved by handoff")
+        expect(!masterServer.isMuted() && server.isMuted(), "PRIMARY only unmutes after BACKUP mute verification")
+        expect(masterServer.hasMute(2) && !masterServer.hasMute(1), "Manual PRIMARY mute is preserved by handoff")
         expect(masterPlayback.restores > 0, "Recovery restores playback, not just selection")
         // A freshly verified BACKUP must not be orange due to earlier discovery failures.
         manager.liveMirrorSynchronized = true; manager.failoverReady = true
@@ -464,13 +464,13 @@ final class FakeQLab: @unchecked Sendable {
         manager.isConnected = true; manager.lastError = nil; manager.workspaceTransferError = nil
         manager.failoverActivationError = nil
         master.liveMirrorSynchronized = true
-        master.failoverBlockedReason = "Workspace MASTER inconnu" // stale BACKUP-only diagnostic
-        master.heartbeatAlive = false // MASTER sends heartbeats; it does not receive them.
-        expect(master.menuBarStatusText == "Synchro OK", "Synchronized MASTER ignores BACKUP-only status after return")
+        master.failoverBlockedReason = "Workspace PRIMARY inconnu" // stale BACKUP-only diagnostic
+        master.heartbeatAlive = false // PRIMARY sends heartbeats; it does not receive them.
+        expect(master.menuBarStatusText == "Synchro OK", "Synchronized PRIMARY ignores BACKUP-only status after return")
         master.lastError = "Current network error"
-        expect(master.menuBarStatusText == "Désynchronisé", "Real MASTER error remains visible")
+        expect(master.menuBarStatusText == "Désynchronisé", "Real PRIMARY error remains visible")
         master.lastError = nil; master.masterReturning = true
-        expect(master.menuBarStatusText != "Synchro OK", "Silent returning MASTER is not reported active OK")
+        expect(master.menuBarStatusText != "Synchro OK", "Silent returning PRIMARY is not reported active OK")
         master.masterReturning = false
         master.stop()
 

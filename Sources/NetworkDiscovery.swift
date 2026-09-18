@@ -251,7 +251,7 @@ final class NetworkDiscovery: ObservableObject {
     private var backupHandshakeTask: Task<Void, Never>?
     private var selectedMasterID: String?
 
-    // Never choose an arbitrary MASTER or reconnect across a pending takeover.
+    // Never choose an arbitrary PRIMARY or reconnect across a pending takeover.
     private func connectDiscoveredMasterIfNeeded() {
         guard runtimeRole == .backup, activeConnection == nil,
               !isConnected else { return }
@@ -803,7 +803,7 @@ final class NetworkDiscovery: ObservableObject {
         )
 
         print(
-            "MASTER : DOSSIER PROJET QLAB DÉTECTÉ"
+            "PRIMARY : DOSSIER PROJET QLAB DÉTECTÉ"
         )
 
         print(
@@ -846,7 +846,7 @@ final class NetworkDiscovery: ObservableObject {
         else {
 
             workspaceTransferError =
-                "BACKUP non connecté au MASTER"
+                "BACKUP non connecté au PRIMARY"
 
             return
         }
@@ -900,7 +900,7 @@ final class NetworkDiscovery: ObservableObject {
             nil
 
         workspaceTransferStatus =
-            "Demande du projet au MASTER…"
+            "Demande du projet au PRIMARY…"
 
 
         workspaceTransferStatus = "Vérification des médias déjà présents…"
@@ -921,7 +921,7 @@ final class NetworkDiscovery: ObservableObject {
             }.value
             guard let self, self.workspaceTransferID == requestGeneration,
                   !self.workspaceTransferCancelled, self.activeConnection === connection else { return }
-            self.workspaceTransferStatus = "Demande du projet au MASTER…"
+            self.workspaceTransferStatus = "Demande du projet au PRIMARY…"
             MirrorDiagnostics.log("TRANSFERT inventaire : \(hashes.count) fichiers locaux vérifiés")
             self.sendJSON(["type": "TRANSFER_REQUEST", "sessionID": session, "workspace": name,
                 "binaryTransferVersion": 1, "availableMediaSHA256": hashes.sorted()], on: connection)
@@ -1008,7 +1008,7 @@ final class NetworkDiscovery: ObservableObject {
                 if let error {
                     if self.binaryTransfer != nil { self.finishWorkspaceTransferWithError("Liaison de contrôle interrompue : " + error.localizedDescription) }
                     print(
-                        "MASTER réception contrôle :",
+                        "PRIMARY réception contrôle :",
                         error.localizedDescription
                     )
 
@@ -1027,7 +1027,7 @@ final class NetworkDiscovery: ObservableObject {
 
 
                     guard self.masterControlReceiveBuffer.count <= 8 * 1024 * 1024 else {
-                        self.lastError = "Trame MASTER/BACKUP trop volumineuse"
+                        self.lastError = "Trame PRIMARY/BACKUP trop volumineuse"
                         connection.cancel(); return
                     }
                     while let newline =
@@ -1104,7 +1104,7 @@ final class NetworkDiscovery: ObservableObject {
                                         "type":
                                             "TRANSFER_REJECT",
                                         "message":
-                                            "Le MASTER traite déjà un transfert"
+                                            "Le PRIMARY traite déjà un transfert"
                                     ],
                                     on:
                                         connection
@@ -1209,7 +1209,7 @@ final class NetworkDiscovery: ObservableObject {
 
 
                             print(
-                                "MASTER : fallback confirmé par le BACKUP"
+                                "PRIMARY : fallback confirmé par le BACKUP"
                             )
 
 
@@ -1254,7 +1254,7 @@ final class NetworkDiscovery: ObservableObject {
                     "type":
                         "TRANSFER_ERROR",
                     "message":
-                        "Dossier projet QLab MASTER non détecté"
+                        "Dossier projet QLab PRIMARY non détecté"
                 ],
                 on: connection
             )
@@ -1286,7 +1286,7 @@ final class NetworkDiscovery: ObservableObject {
         else {
 
             let message =
-                "Le dossier projet QLab MASTER n'existe plus"
+                "Le dossier projet QLab PRIMARY n'existe plus"
 
 
             workspaceTransferInProgress =
@@ -1560,7 +1560,7 @@ final class NetworkDiscovery: ObservableObject {
         else {
 
             finishWorkspaceTransferWithError(
-                "Flux archive MASTER indisponible"
+                "Flux archive PRIMARY indisponible"
             )
 
             return
@@ -1787,7 +1787,7 @@ final class NetworkDiscovery: ObservableObject {
 
 
                 print(
-                    "MASTER : timeout confirmation transfert BACKUP"
+                    "PRIMARY : timeout confirmation transfert BACKUP"
                 )
             }
     }
@@ -2225,7 +2225,7 @@ final class NetworkDiscovery: ObservableObject {
             finishWorkspaceTransferWithError(
                 object["message"]
                     as? String
-                ?? "Erreur de transfert MASTER"
+                ?? "Erreur de transfert PRIMARY"
             )
 
 
@@ -2291,7 +2291,7 @@ final class NetworkDiscovery: ObservableObject {
                         code: 2,
                         userInfo: [
                             NSLocalizedDescriptionKey:
-                                "Vérification SHA-256 échouée : la copie reçue n'est pas identique au MASTER"
+                                "Vérification SHA-256 échouée : la copie reçue n'est pas identique au PRIMARY"
                         ]
                     )
                 }
@@ -2958,7 +2958,7 @@ final class NetworkDiscovery: ObservableObject {
 
                 let wasManualSimulation =
                     failoverReason
-                    == "SIMULATION MANUELLE PERTE MASTER"
+                    == "SIMULATION MANUELLE PERTE PRIMARY"
 
 
                 failoverDeactivationPending = false
@@ -3346,13 +3346,13 @@ final class NetworkDiscovery: ObservableObject {
 
         guard linkLost else {
             simulatedFailoverBlockedReason =
-                "MASTER toujours joignable"
+                "PRIMARY toujours joignable"
             return
         }
 
         guard !heartbeatAlive else {
             simulatedFailoverBlockedReason =
-                "Heartbeat MASTER encore actif"
+                "Heartbeat PRIMARY encore actif"
             return
         }
 
@@ -3477,7 +3477,7 @@ final class NetworkDiscovery: ObservableObject {
         else {
             MirrorDiagnostics.log("\(type) refusé envoi : BACKUP non connecté cue=\(cueID ?? "")")
             print(
-                "ÉVÉNEMENT MASTER observé sans BACKUP :",
+                "ÉVÉNEMENT PRIMARY observé sans BACKUP :",
                 type,
                 cueID ?? ""
             )
@@ -3506,7 +3506,7 @@ final class NetworkDiscovery: ObservableObject {
         }
 
         print(
-            "ÉVÉNEMENT MASTER transmis :",
+            "ÉVÉNEMENT PRIMARY transmis :",
             type,
             cueID ?? ""
         )
@@ -3616,7 +3616,7 @@ final class NetworkDiscovery: ObservableObject {
             self.sendJSON(["type": "BACKUP_SELECTION", "sessionID": session,
                 "workspaceID": workspaceID, "cueID": cueID, "baseCueID": base,
                 "requestID": self.lastBackupSelectionRequest!], on: connection)
-            MirrorDiagnostics.log("SÉLECTION BACKUP → MASTER demandée cue=\(cueID)")
+            MirrorDiagnostics.log("SÉLECTION BACKUP → PRIMARY demandée cue=\(cueID)")
         }
     }
 
@@ -3633,12 +3633,12 @@ final class NetworkDiscovery: ObservableObject {
         if selectionRequestIDs.count > 256 { selectionRequestIDs.removeFirst() }
         guard object["baseCueID"] as? String == masterPlayheadID else {
             if let current = masterPlayheadID { sendPlayheadUpdate(cueID: current) }
-            MirrorDiagnostics.log("SÉLECTION BACKUP refusée : le MASTER a changé entre-temps")
+            MirrorDiagnostics.log("SÉLECTION BACKUP refusée : le PRIMARY a changé entre-temps")
             return
         }
         guard qlabOSCClient?.setPlayhead(cueID: cue) == true else { return }
         // Broadcast only when QLab confirms the new playhead. Never trigger GO.
-        MirrorDiagnostics.log("SÉLECTION BACKUP → MASTER application OSC cue=\(cue)")
+        MirrorDiagnostics.log("SÉLECTION BACKUP → PRIMARY application OSC cue=\(cue)")
     }
 
     private func startHeartbeat(
@@ -3669,7 +3669,7 @@ final class NetworkDiscovery: ObservableObject {
                     "timestamp":
                         Date().timeIntervalSince1970,
 
-                    // Un MASTER dont QLab ne répond plus
+                    // Un PRIMARY dont QLab ne répond plus
                     // n'est PAS considéré comme sain,
                     // même si QLab Fallback tourne encore.
                     "qlabAlive":
@@ -3750,7 +3750,7 @@ final class NetworkDiscovery: ObservableObject {
                 false
 
             failoverBlockedReason =
-                "Workspace MASTER inconnu"
+                "Workspace PRIMARY inconnu"
 
             return
         }
@@ -3787,7 +3787,7 @@ final class NetworkDiscovery: ObservableObject {
                 false
 
             failoverBlockedReason =
-                "Workspace BACKUP différent du MASTER"
+                "Workspace BACKUP différent du PRIMARY"
 
             return
         }
@@ -3820,7 +3820,7 @@ final class NetworkDiscovery: ObservableObject {
                 false
 
             failoverBlockedReason =
-                "Playhead MASTER non synchronisé"
+                "Playhead PRIMARY non synchronisé"
 
             return
         }
@@ -3909,7 +3909,7 @@ final class NetworkDiscovery: ObservableObject {
         failoverPending = true
         failoverPreparedAt = Date()
         failoverReason =
-            "SIMULATION MANUELLE PERTE MASTER"
+            "SIMULATION MANUELLE PERTE PRIMARY"
 
         failoverTakeoverLatched = true
         failoverActivationPending = true
@@ -3919,7 +3919,7 @@ final class NetworkDiscovery: ObservableObject {
             "========================================"
         )
         print(
-            "SIMULATION : PERTE MASTER"
+            "SIMULATION : PERTE PRIMARY"
         )
         print(
             "Déclenchement du vrai UNMUTE BACKUP"
@@ -3930,7 +3930,7 @@ final class NetworkDiscovery: ObservableObject {
 
         setBackupAudioMuted(
             false,
-            reason: "simulation perte MASTER"
+            reason: "simulation perte PRIMARY"
         )
     }
 
@@ -4001,7 +4001,7 @@ final class NetworkDiscovery: ObservableObject {
         }
 
         // Si un test audio était en cours au moment
-        // de la panne MASTER, on arrête seulement
+        // de la panne PRIMARY, on arrête seulement
         // son compte à rebours.
         //
         // Surtout : aucun remute.
@@ -4032,7 +4032,7 @@ final class NetworkDiscovery: ObservableObject {
         // qu'après confirmation muteChannels.
         setBackupAudioMuted(
             false,
-            reason: "perte MASTER"
+            reason: "perte PRIMARY"
         )
     }
 
@@ -4056,7 +4056,7 @@ final class NetworkDiscovery: ObservableObject {
                 false
 
             workspaceTransferError =
-                "Transfert interrompu par la perte du MASTER"
+                "Transfert interrompu par la perte du PRIMARY"
 
             workspaceTransferStatus =
                 "Transfert interrompu"
@@ -4069,7 +4069,7 @@ final class NetworkDiscovery: ObservableObject {
             linkLostAt = Date()
 
             print(
-                "PERTE MASTER détectée :",
+                "PERTE PRIMARY détectée :",
                 reason
             )
         }
@@ -4087,7 +4087,7 @@ final class NetworkDiscovery: ObservableObject {
         heartbeatAlive = true
 
         // Une fois la prise de relais demandée
-        // ou confirmée, le retour du MASTER
+        // ou confirmée, le retour du PRIMARY
         // ne provoque jamais un remute automatique.
         if failoverTakeoverLatched
             || failoverActive
@@ -4095,7 +4095,7 @@ final class NetworkDiscovery: ObservableObject {
 
             if wasLost {
                 print(
-                    "MASTER revenu — BACKUP reste en prise de relais"
+                    "PRIMARY revenu — BACKUP reste en prise de relais"
                 )
             }
 
@@ -4110,7 +4110,7 @@ final class NetworkDiscovery: ObservableObject {
 
         if wasLost {
             print(
-                "Liaison MASTER rétablie"
+                "Liaison PRIMARY rétablie"
             )
         }
     }
@@ -4202,18 +4202,18 @@ final class NetworkDiscovery: ObservableObject {
                 guard self.isConnected else {
                     self.heartbeatAlive = false
 
-                    // Si un MASTER avait déjà été authentifié,
+                    // Si un PRIMARY avait déjà été authentifié,
                     // la disparition de la connexion est une
                     // vraie perte de transport.
                     //
-                    // Pendant une simple recherche de MASTER,
+                    // Pendant une simple recherche de PRIMARY,
                     // connectedSessionID est nil : aucune bascule.
                     if self.runtimeRole == .backup,
                        self.connectedSessionID != nil {
 
                         self.markLinkLost(
                             reason:
-                                "Connexion MASTER interrompue"
+                                "Connexion PRIMARY interrompue"
                         )
                     }
 
@@ -4496,7 +4496,7 @@ final class NetworkDiscovery: ObservableObject {
         print(
             "Rôle :",
             runtimeRole == .master
-                ? "MASTER"
+                ? "PRIMARY"
                 : runtimeRole == .backup
                     ? "BACKUP"
                     : "IDLE"
@@ -5266,7 +5266,7 @@ final class NetworkDiscovery: ObservableObject {
                     self.isBrowsing = true
                 case .waiting(let error), .failed(let error):
                     self.isBrowsing = false
-                    self.lastError = "Découverte MASTER : " + error.localizedDescription
+                    self.lastError = "Découverte PRIMARY : " + error.localizedDescription
                 case .cancelled:
                     self.isBrowsing = false
                 default: break
@@ -5343,11 +5343,11 @@ final class NetworkDiscovery: ObservableObject {
                 case .ready:
                     self.sendHello(on: connection)
                 case .waiting(let error):
-                    self.lastError = "Connexion MASTER en attente : " + error.localizedDescription
+                    self.lastError = "Connexion PRIMARY en attente : " + error.localizedDescription
                 case .failed(let error):
                     self.finishBackupConnection(connection, reason: error.localizedDescription)
                 case .cancelled:
-                    self.finishBackupConnection(connection, reason: "Connexion MASTER annulée")
+                    self.finishBackupConnection(connection, reason: "Connexion PRIMARY annulée")
                 default: break
                 }
             }
@@ -5356,7 +5356,7 @@ final class NetworkDiscovery: ObservableObject {
             do { try await Task.sleep(nanoseconds: 10_000_000_000) }
             catch { return }
             guard let self, self.activeConnection === connection, !self.isConnected else { return }
-            self.finishBackupConnection(connection, reason: "MASTER : délai TCP/WELCOME dépassé (10 s)")
+            self.finishBackupConnection(connection, reason: "PRIMARY : délai TCP/WELCOME dépassé (10 s)")
         }
         connection.start(queue: .main)
     }
@@ -5405,7 +5405,7 @@ final class NetworkDiscovery: ObservableObject {
                 }
 
                 if let error {
-                    self.finishBackupConnection(connection, reason: "Erreur TCP MASTER : " + error.localizedDescription)
+                    self.finishBackupConnection(connection, reason: "Erreur TCP PRIMARY : " + error.localizedDescription)
                     return
                 }
 
@@ -5413,8 +5413,8 @@ final class NetworkDiscovery: ObservableObject {
                     self.receiveBuffer.append(data)
 
                     guard self.receiveBuffer.count <= 8 * 1024 * 1024 else {
-                        self.lastError = "Trame MASTER/BACKUP trop volumineuse"
-                        self.finishBackupConnection(connection, reason: "Trame MASTER/BACKUP trop volumineuse")
+                        self.lastError = "Trame PRIMARY/BACKUP trop volumineuse"
+                        self.finishBackupConnection(connection, reason: "Trame PRIMARY/BACKUP trop volumineuse")
                         return
                     }
                     while let newlineIndex =
@@ -5555,7 +5555,7 @@ final class NetworkDiscovery: ObservableObject {
 
 
                             // --------------------------------
-                            // ÉTAT QLAB DU MASTER
+                            // ÉTAT QLAB DU PRIMARY
                             // --------------------------------
                             //
                             // Compatibilité avec une ancienne
@@ -5675,7 +5675,7 @@ final class NetworkDiscovery: ObservableObject {
                                     print(
                                         "ATTENTION :",
                                         missing,
-                                        "événement(s) MASTER manquant(s)"
+                                        "événement(s) PRIMARY manquant(s)"
                                     )
                                 }
                             }
@@ -5700,7 +5700,7 @@ final class NetworkDiscovery: ObservableObject {
                                 Date()
 
                             print(
-                                "ÉVÉNEMENT MASTER VALIDÉ sur BACKUP :",
+                                "ÉVÉNEMENT PRIMARY VALIDÉ sur BACKUP :",
                                 "#\(sequence)",
                                 eventType,
                                 cueID ?? ""
@@ -5767,7 +5767,7 @@ final class NetworkDiscovery: ObservableObject {
                 }
 
                 if isComplete {
-                    self.finishBackupConnection(connection, reason: "Connexion TCP MASTER fermée")
+                    self.finishBackupConnection(connection, reason: "Connexion TCP PRIMARY fermée")
                     return
                 }
 
@@ -6073,7 +6073,7 @@ extension NetworkDiscovery {
         }
         engine.send = { [weak self] payload in
             guard let self, let connection = self.activeConnection, self.isConnected else {
-                throw MirrorFailure.invalid("Liaison MASTER/BACKUP fermée")
+                throw MirrorFailure.invalid("Liaison PRIMARY/BACKUP fermée")
             }
             try await withCheckedThrowingContinuation { (continuation: CheckedContinuation<Void, Error>) in
                 self.sendJSONWithCompletion(payload, on: connection) { error in
@@ -6279,7 +6279,7 @@ extension NetworkDiscovery {
                 returnToken = nil; completedReturnToken = nil; returnInProgress = false
             }
             recoveryToken = token; masterReturning = true
-            recoveryStatus = masterReturnReady ? "MASTER aligné en silence — reprise manuelle disponible" : "Retour MASTER : mise à jour silencieuse en cours"
+            recoveryStatus = masterReturnReady ? "PRIMARY aligné en silence — reprise manuelle disponible" : "Retour PRIMARY : mise à jour silencieuse en cours"
             startRecoveryMonitor()
             if !recoveryMasterIsolated && recoveryOperation == nil {
                 configureRecoveryCheck(connection, token: token)
@@ -6290,7 +6290,7 @@ extension NetworkDiscovery {
                     do {
                         try await self.recoveryIO.isolate()
                         self.recoveryMasterIsolated = true
-                        MirrorDiagnostics.log("RETOUR MASTER : isolation confirmée avant réception de l'état BACKUP")
+                        MirrorDiagnostics.log("RETOUR PRIMARY : isolation confirmée avant réception de l'état BACKUP")
                     } catch {
                         self.masterReturnReady = false; self.recoveryStatus = error.localizedDescription
                         self.recoverySend("RECOVERY_ERROR", ["message": error.localizedDescription])
@@ -6302,7 +6302,7 @@ extension NetworkDiscovery {
         guard token == recoveryToken else { return }
         if type == "RECOVERY_READY", runtimeRole == .backup, failoverActive || failoverTakeoverLatched {
             masterReturnReady = true; recoveryLastReady = Date()
-            recoveryStatus = "MASTER aligné en silence — le BACKUP garde le son"
+            recoveryStatus = "PRIMARY aligné en silence — le BACKUP garde le son"
             return
         }
         if type == "RECOVERY_ERROR" {
@@ -6311,7 +6311,7 @@ extension NetworkDiscovery {
                 if let pending = returnToken { recoverySend("RECOVERY_RETURN_CANCEL", ["returnID": pending]) }
                 returnInProgress = false; returnToken = nil
             }
-            recoveryStatus = object["message"] as? String ?? "Retour MASTER non confirmé"
+            recoveryStatus = object["message"] as? String ?? "Retour PRIMARY non confirmé"
             MirrorDiagnostics.log("RETOUR refusé : " + recoveryStatus)
             return
         }
@@ -6328,7 +6328,7 @@ extension NetworkDiscovery {
             failoverActivationError = nil; failoverDeactivationError = nil
             failoverDeactivationPending = false
             returnInProgress = false; masterReturnReady = false
-            recoveryStatus = "Son repris sur le MASTER — BACKUP isolé"
+            recoveryStatus = "Son repris sur le PRIMARY — BACKUP isolé"
             recoveryToken = nil; returnToken = nil
             liveMirror.start(); refreshLocalQLabState()
             return
@@ -6351,7 +6351,7 @@ extension NetworkDiscovery {
                           let pending = self.recoveryRequest, object["requestID"] as? String == pending.id else { return }
                     self.recoveryRequest = nil
                     let age = (ProcessInfo.processInfo.systemUptime - pending.sent) / 2
-                    guard age < 1 else { throw MirrorFailure.invalid("Retour MASTER : liaison trop lente pour confirmer la lecture") }
+                    guard age < 1 else { throw MirrorFailure.invalid("Retour PRIMARY : liaison trop lente pour confirmer la lecture") }
                     let state = try self.decodeRecovery(object)
                     self.masterReturnReady = false
                     let began = ProcessInfo.processInfo.systemUptime
@@ -6360,14 +6360,14 @@ extension NetworkDiscovery {
                     self.recoveryState = try await self.recoveryIO.snapshot()
                     self.recoveryStateAt = ProcessInfo.processInfo.systemUptime
                     self.masterReturnReady = true; self.recoveryLastReady = Date()
-                    self.recoveryStatus = "MASTER aligné en silence — reprise manuelle disponible"
+                    self.recoveryStatus = "PRIMARY aligné en silence — reprise manuelle disponible"
                     self.recoverySend("RECOVERY_READY")
                 case "RECOVERY_RETURN_PREPARE":
                     guard self.runtimeRole == .master, self.masterReturning,
                           let returnID = object["returnID"] as? String, UUID(uuidString: returnID) != nil,
                           (self.returnToken == returnID && self.returnInProgress) ||
                           (self.masterReturnReady && Date().timeIntervalSince(self.recoveryLastReady) < 3) else {
-                        throw MirrorFailure.invalid("Le MASTER n'est pas encore prêt à reprendre")
+                        throw MirrorFailure.invalid("Le PRIMARY n'est pas encore prêt à reprendre")
                     }
                     try await self.recoveryIO.isolate()
                     let state = try await self.recoveryIO.snapshot()
@@ -6379,14 +6379,14 @@ extension NetworkDiscovery {
                     let master = try self.decodeRecovery(object)
                     let local = try await self.recoveryIO.snapshot()
                     guard master.matches(local, age: 0, tolerance: 1) else {
-                        throw MirrorFailure.invalid("Le BACKUP a changé : attendre un nouvel alignement du MASTER")
+                        throw MirrorFailure.invalid("Le BACKUP a changé : attendre un nouvel alignement du PRIMARY")
                     }
-                    self.setBackupAudioMuted(true, reason: "reprise manuelle MASTER")
+                    self.setBackupAudioMuted(true, reason: "reprise manuelle PRIMARY")
                     for _ in 0..<40 {
                         try await Task.sleep(nanoseconds: 100_000_000); try self.recoveryIO.check()
                         if self.backupAudioIsolationConfirmed { break }
                     }
-                    guard self.backupAudioIsolationConfirmed else { throw MirrorFailure.invalid("BACKUP non isolé : son MASTER maintenu coupé") }
+                    guard self.backupAudioIsolationConfirmed else { throw MirrorFailure.invalid("BACKUP non isolé : son PRIMARY maintenu coupé") }
                     self.recoverySend("RECOVERY_RETURN_MUTED", ["returnID": self.returnToken ?? ""])
                 case "RECOVERY_RETURN_MUTED":
                     guard self.runtimeRole == .master, let returnID = object["returnID"] as? String,
@@ -6398,7 +6398,7 @@ extension NetworkDiscovery {
                     }
                     self.recoverySend("RECOVERY_RETURN_DONE", ["returnID": returnID])
                     self.returnInProgress = false; self.masterReturning = false; self.masterReturnReady = false
-                    self.recoveryStatus = "MASTER actif — reprise sonore confirmée"
+                    self.recoveryStatus = "PRIMARY actif — reprise sonore confirmée"
                     if let cue = self.masterPlayheadID { self.sendPlayheadUpdate(cueID: cue) }
                 default: break
                 }
@@ -6418,11 +6418,11 @@ extension NetworkDiscovery {
         guard runtimeRole == .backup, failoverActive || failoverTakeoverLatched,
               masterReturnReady, isConnected, heartbeatAlive, !returnInProgress,
               Date().timeIntervalSince(recoveryLastReady) < 3 else {
-            failoverDeactivationError = "Attendre le MASTER aligné en silence avant de reprendre le son"
+            failoverDeactivationError = "Attendre le PRIMARY aligné en silence avant de reprendre le son"
             return
         }
         returnToken = UUID().uuidString; returnInProgress = true
-        recoveryStatus = "Reprise manuelle : vérification du MASTER avant ré-isolation du BACKUP"
+        recoveryStatus = "Reprise manuelle : vérification du PRIMARY avant ré-isolation du BACKUP"
         recoverySend("RECOVERY_RETURN_PREPARE", ["returnID": returnToken!])
     }
 }
@@ -6471,7 +6471,7 @@ extension NetworkDiscovery {
                 guard let workspace = self.qlabOSCWorkspaceID else { throw MirrorFailure.invalid("QLab non connecté") }
                 _ = try await self.runQLab(MirrorQLab.idle, [workspace])
                 guard self.speedID == id, self.isConnected else { return }
-                self.networkSpeedStatus = "Connexion au test du MASTER…"
+                self.networkSpeedStatus = "Connexion au test du PRIMARY…"
                 self.speedSend("SPEED_REQUEST", id: id)
             } catch {
                 guard self.speedID == id else { return }
@@ -6487,7 +6487,7 @@ extension NetworkDiscovery {
         if type == "SPEED_REQUEST", runtimeRole == .master {
             guard !networkSpeedRunning, !workspaceTransferInProgress, !liveMirrorReloading,
                   !masterReturning, !returnInProgress, qlabOSCConnected else {
-                speedSend("SPEED_ERROR", id: id, extra: ["message": "MASTER occupé : attendre la fin de l’opération en cours"]); return
+                speedSend("SPEED_ERROR", id: id, extra: ["message": "PRIMARY occupé : attendre la fin de l’opération en cours"]); return
             }
             speedID = id; networkSpeedRunning = true; networkSpeedStatus = "Test demandé par le BACKUP…"
             speedDeadline(id: id)
@@ -6510,7 +6510,7 @@ extension NetworkDiscovery {
                     probe.serve(parameters: try self.networkParameters()) { [weak self] port in
                         Task { @MainActor in
                             guard let self, self.speedID == id else { return }
-                            self.networkSpeedStatus = "Test réseau MASTER → BACKUP (32 Mio)…"
+                            self.networkSpeedStatus = "Test réseau PRIMARY → BACKUP (32 Mio)…"
                             self.speedSend("SPEED_READY", id: id, extra: ["port": Int(port)])
                         }
                     }
@@ -6533,7 +6533,7 @@ extension NetworkDiscovery {
         if type == "SPEED_READY", runtimeRole == .backup, speedProbe == nil {
             guard let port = frame["port"] as? Int, (1...65535).contains(port),
                   case let .hostPort(host, _) = connection.currentPath?.remoteEndpoint else {
-                speedSend("SPEED_CANCEL", id: id); finishSpeedTest("Adresse du MASTER indisponible pour le test"); return
+                speedSend("SPEED_CANCEL", id: id); finishSpeedTest("Adresse du PRIMARY indisponible pour le test"); return
             }
             do {
                 let probe = NetworkSpeedProbe(token: id) { [weak self] result in
@@ -6550,7 +6550,7 @@ extension NetworkDiscovery {
                         }
                     }
                 }
-                speedProbe = probe; networkSpeedStatus = "Mesure MASTER → BACKUP (32 Mio)…"
+                speedProbe = probe; networkSpeedStatus = "Mesure PRIMARY → BACKUP (32 Mio)…"
                 probe.receive(host: host, port: UInt16(port), parameters: try networkParameters())
             } catch {
                 speedSend("SPEED_CANCEL", id: id); finishSpeedTest(error.localizedDescription)

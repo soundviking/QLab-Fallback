@@ -48,7 +48,7 @@ enum RecoveryQLab {
         set end of rows to ph
         if (count argv) > 1 then
           set cs to every cue of w whose uniqueID is item 2 of argv
-          if (count cs) is not 1 then error "Cue de reprise absente du MASTER"
+          if (count cs) is not 1 then error "Cue de reprise absente du PRIMARY"
         else
           set cs to active cues of w
         end if
@@ -170,7 +170,7 @@ final class RecoveryIO {
         return try JSONSerialization.jsonObject(with: data, options: [.fragmentsAllowed])
     }
     func isolate() async throws {
-        guard let id = identity(), let client = client() else { throw MirrorFailure.invalid("MASTER non connecté") }
+        guard let id = identity(), let client = client() else { throw MirrorFailure.invalid("PRIMARY non connecté") }
         if ownedWorkspace != id {
             ownedWorkspace = id; owned = [:]
             if persist, let saved = UserDefaults.standard.dictionary(forKey: "RecoveryMute-" + id) as? [String: [Int]] {
@@ -178,37 +178,37 @@ final class RecoveryIO {
             }
         }
         guard let patches = try await query("settings/audio/patchList") as? [[String: Any]], !patches.isEmpty else {
-            throw MirrorFailure.invalid("Patches audio MASTER non vérifiés")
+            throw MirrorFailure.invalid("Patches audio PRIMARY non vérifiés")
         }
         for p in patches {
             guard let patch = p["uniqueID"] as? String,
                   let routing = p["routing"] as? [Int], let muted = p["muteChannels"] as? [Int] else {
-                throw MirrorFailure.invalid("Patch MASTER incomplet")
+                throw MirrorFailure.invalid("Patch PRIMARY incomplet")
             }
             let active = Set(routing.filter { $0 > 0 }).subtracting(muted)
             owned[patch, default: []].formUnion(active)
             if persist { UserDefaults.standard.set(owned.mapValues { Array($0) }, forKey: "RecoveryMute-" + id) }
             for output in owned[patch, default: []] {
                 guard client.recoveryCommand("/workspace/\(id)/settings/audio/patchID/\(patch)/mute/\(output)", arguments: [.bool(true)]) else {
-                    throw MirrorFailure.invalid("Isolation MASTER refusée")
+                    throw MirrorFailure.invalid("Isolation PRIMARY refusée")
                 }
             }
             let expected = Set(routing).union(owned[patch, default: []])
             guard let actual = try await query("settings/audio/patchID/\(patch)/muteChannels") as? [Int], expected.isSubset(of: Set(actual)) else {
-                throw MirrorFailure.invalid("Isolation MASTER non confirmée")
+                throw MirrorFailure.invalid("Isolation PRIMARY non confirmée")
             }
         }
     }
     func release() async throws {
-        guard let id = identity(), id == ownedWorkspace, let client = client() else { throw MirrorFailure.invalid("Isolation MASTER inconnue") }
+        guard let id = identity(), id == ownedWorkspace, let client = client() else { throw MirrorFailure.invalid("Isolation PRIMARY inconnue") }
         for (patch, outputs) in owned {
             for output in outputs {
                 guard client.recoveryCommand("/workspace/\(id)/settings/audio/patchID/\(patch)/mute/\(output)", arguments: [.bool(false)]) else {
-                    throw MirrorFailure.invalid("Reprise sonore MASTER refusée")
+                    throw MirrorFailure.invalid("Reprise sonore PRIMARY refusée")
                 }
             }
             guard let actual = try await query("settings/audio/patchID/\(patch)/muteChannels") as? [Int], outputs.isDisjoint(with: Set(actual)) else {
-                throw MirrorFailure.invalid("Reprise sonore MASTER non confirmée")
+                throw MirrorFailure.invalid("Reprise sonore PRIMARY non confirmée")
             }
         }
         owned.removeAll()
@@ -223,7 +223,7 @@ final class RecoveryIO {
             let local = try await snapshot(cueID: c.id)
             guard let match = local.cues.first, match.type == c.type,
                   match.mediaHash == c.mediaHash, abs(match.duration - c.duration) < 0.01 else {
-                throw MirrorFailure.invalid("Cue/média différent sur le MASTER : \(c.id)")
+                throw MirrorFailure.invalid("Cue/média différent sur le PRIMARY : \(c.id)")
             }
         }
         let local = try await snapshot()
@@ -241,7 +241,7 @@ final class RecoveryIO {
         let verified = try await snapshot()
         guard state.matches(verified, age: age + ProcessInfo.processInfo.systemUptime - began) else {
             MirrorDiagnostics.log("RETOUR écart lecture attendu=\(state) obtenu=\(verified)")
-            throw MirrorFailure.invalid("Lecture MASTER pas encore alignée sur le BACKUP")
+            throw MirrorFailure.invalid("Lecture PRIMARY pas encore alignée sur le BACKUP")
         }
     }
 }

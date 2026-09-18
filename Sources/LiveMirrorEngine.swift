@@ -161,13 +161,13 @@ final class LiveMirrorEngine {
     func tick() async {
         let c = context(), token = generation
         guard c.connected, !c.workspaceID.isEmpty, !c.session.isEmpty else {
-            setState(false, "Live Mirror : connexion QLab/MASTER attendue"); return
+            setState(false, "Live Mirror : connexion QLab/PRIMARY attendue"); return
         }
         adoptSession(c.session)
         guard !c.initialTransfer else { setState(false, "Live Mirror : transfert initial en cours"); return }
         do {
             if c.master {
-                guard let rootPath = c.root else { throw MirrorFailure.invalid("Dossier MASTER inconnu") }
+                guard let rootPath = c.root else { throw MirrorFailure.invalid("Dossier PRIMARY inconnu") }
                 // Save captures all cue properties, including those absent from OSC snapshots.
                 let workspace = try await qlab(MirrorQLab.locate, [c.workspaceID])
                 try valid(token, c.session)
@@ -218,7 +218,7 @@ final class LiveMirrorEngine {
                 if let m = applied {
                     try await verifyAppliedWorkspace(m)
                 }
-                if Date().timeIntervalSince(lastRemote) > 15 { setState(false, "Live Mirror : confirmation MASTER expirée") }
+                if Date().timeIntervalSince(lastRemote) > 15 { setState(false, "Live Mirror : confirmation PRIMARY expirée") }
                 if let m = incoming, !applying { try await commit(m, token: token) }
             }
         } catch is CancellationError { return }
@@ -270,7 +270,7 @@ final class LiveMirrorEngine {
             switch type {
             case "MIRROR_ACK":
                 lastRemote = Date(); acknowledged = m.digest
-                // Tick re-scans MASTER before reporting OK.
+                // Tick re-scans PRIMARY before reporting OK.
             case "MIRROR_NEED":
                 guard let hashes = obj["hashes"] as? [String], hashes.count <= m.files.count else { throw MirrorFailure.invalid("Demande média invalide") }
                 let allowed = Set(m.files.map(\.sha256)), cache = try objectRoot()
@@ -304,7 +304,7 @@ final class LiveMirrorEngine {
             if let m = applied, locallyVerified, matches(obj, m), readyAfterReload() {
                 try await send(message("MIRROR_ACK", manifest: m))
             }
-            setState(ok, ok ? "Live Mirror : dernière version appliquée et acquittée" : "Live Mirror : version MASTER non appliquée/acquittée")
+            setState(ok, ok ? "Live Mirror : dernière version appliquée et acquittée" : "Live Mirror : version PRIMARY non appliquée/acquittée")
         case "MIRROR_OFFER":
             guard let raw = obj["manifest"], JSONSerialization.isValidJSONObject(raw) else { throw MirrorFailure.invalid("Manifest absent") }
             let m = try JSONDecoder().decode(MirrorManifest.self, from: JSONSerialization.data(withJSONObject: raw))
@@ -481,7 +481,7 @@ final class LiveMirrorEngine {
         let loaded = try await qlab(MirrorQLab.idle, [m.workspaceID])
         guard loaded == target.path else { throw MirrorFailure.invalid("QLab n’a pas ouvert la version attendue") }
         try valid(token, m.session)
-        // QLab may retain absolute MASTER media paths; remap by stable cue ID.
+        // QLab may retain absolute PRIMARY media paths; remap by stable cue ID.
         // Bound argv length by relinking one cue at a time.
         for (id, relative) in m.mediaTargets.sorted(by: { $0.key < $1.key }) {
             let media = try MirrorFiles.safeURL(relative, under: destination)
@@ -509,6 +509,6 @@ final class LiveMirrorEngine {
         try valid(token, m.session)
         applied = m; incoming = nil; locallyVerified = true; completed = true; preparedDigest = nil
         try await send(message("MIRROR_ACK", manifest: m))
-        setState(false, "Live Mirror : version \(m.revision) appliquée, confirmation MASTER attendue")
+        setState(false, "Live Mirror : version \(m.revision) appliquée, confirmation PRIMARY attendue")
     }
 }

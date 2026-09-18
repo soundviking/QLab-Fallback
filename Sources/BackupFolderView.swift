@@ -12,9 +12,9 @@ struct BackupFolderView: View {
                 Button("Changer d’emplacement…") { networkDiscovery.chooseBackupFolder() }
                     .disabled(!networkDiscovery.canChangeBackupFolder)
                 if !networkDiscovery.canChangeBackupFolder {
-                    Text("Arrêtez BACKUP avant de changer de dossier.").font(.caption)
+                    AppText("Arrêtez BACKUP avant de changer de dossier.").font(.caption)
                 }
-                if let error = store.error { Text(error).foregroundStyle(.red) }
+                if let error = store.error { AppText(error).foregroundStyle(.red) }
             }.frame(maxWidth: .infinity, alignment: .leading)
         }
     }

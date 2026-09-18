@@ -374,7 +374,7 @@ final class QLabOSCClient: @unchecked Sendable {
             MirrorDiagnostics.log("GO refusé OSC : QLab non connecté cue=\(cueID)")
             return false
         }
-        // Start the actual MASTER cue atomically. Playhead replication is independent:
+        // Start the actual PRIMARY cue atomically. Playhead replication is independent:
         // a PLAYHEAD for the next cue must never race a two-datagram select + GO.
         let token = UUID()
         goLock.lock(); pendingGo.append((token, cueID)); goLock.unlock()
