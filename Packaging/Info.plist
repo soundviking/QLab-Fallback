@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>CFBundleDisplayName</key>
+	<string>QLab Fallback Build5.14-test</string>
+	<key>CFBundleExecutable</key>
+	<string>QLabFallback</string>
+	<key>CFBundleIconFile</key>
+	<string>AppIcon</string>
+	<key>CFBundleIdentifier</key>
+	<string>fr.viking.qlabfallback.build514test</string>
+	<key>CFBundleName</key>
+	<string>QLab Fallback Build5.14-test</string>
+	<key>CFBundlePackageType</key>
+	<string>APPL</string>
+	<key>CFBundleShortVersionString</key>
+	<string>0.1.0</string>
+	<key>CFBundleVersion</key>
+	<string>514</string>
+	<key>LSMinimumSystemVersion</key>
+	<string>14.0</string>
+	<key>NSAppleEventsUsageDescription</key>
+	<string>Build5.14-test sauvegarde le projet MASTER et applique les versions reçues dans QLab BACKUP, puis vérifie les médias et le playhead.</string>
+	<key>NSBonjourServices</key>
+	<array>
+		<string>_qlabfallback._tcp</string>
+	</array>
+	<key>NSHighResolutionCapable</key>
+	<true/>
+	<key>NSLocalNetworkUsageDescription</key>
+	<string>Build5.14-test synchronise le MASTER et le BACKUP sur le réseau local.</string>
+	<key>QLabFallbackBuildChannel</key>
+	<string>Build5.14-test optimized-resync manual-resync 2-Mac Test</string>
+</dict>
+</plist>
