@@ -123,3 +123,7 @@ extension NetworkDiscovery {
             hash: hash, projectName: "Temporary test only", transferID: id, connection: activeConnection!)
     }
 }
+
+extension NetworkDiscovery {
+    func testPrimaryHeartbeat(healthy: Bool) { receivePrimaryHeartbeat(qlabHealthy: healthy) }
+}

@@ -88,6 +88,8 @@ final class NetworkDiscovery: ObservableObject {
     @Published var lastError: String?
     @Published var heartbeatAlive = false
     @Published var lastHeartbeatAt: Date?
+    @Published private(set) var primaryQLabHealthy = false
+    private var backupTestStartedReady = false
     @Published var linkLost = false
     @Published var linkLostAt: Date?
 
@@ -3093,6 +3095,14 @@ final class NetworkDiscovery: ObservableObject {
             return
         }
 
+        guard !backupOutputTestActive, !linkLost, !failoverPending,
+              !failoverActive, !failoverTakeoverLatched, !failoverActivationPending,
+              !returnInProgress, !workspaceTransferInProgress, !liveMirrorReloading else {
+            backupOutputTestError = "Test indisponible pendant une transition ou une perte PRIMARY"
+            return
+        }
+        refreshLocalQLabState()
+        backupTestStartedReady = failoverReady
         backupOutputTestTask?.cancel()
 
         // Ouvre réellement les sorties QLab BACKUP.
@@ -3168,9 +3178,16 @@ final class NetworkDiscovery: ObservableObject {
         backupOutputTestTask?.cancel()
         backupOutputTestTask = nil
 
-        let wasActive =
-            backupOutputTestActive
-
+        let wasActive = backupOutputTestActive
+        // Resolve loss while the test eligibility is still available.
+        if wasActive && linkLost {
+            activateRealFailover(reason: "Perte PRIMARY pendant test audio")
+            // Even if readiness was lost, never automatically cut an audible backup.
+            // This latch does not claim that audio or the mirror is verified.
+            failoverTakeoverLatched = true
+            if !failoverActive { backupOutputMode = "FAILOVER" }
+        }
+        backupTestStartedReady = false
         backupOutputTestActive = false
         backupOutputTestStartedAt = nil
         backupOutputTestEndsAt = nil
@@ -3777,9 +3794,10 @@ final class NetworkDiscovery: ObservableObject {
             return
         }
 
-        guard backupAudioControlReady, backupAudioIsolationConfirmed,
+        guard backupAudioControlReady,
+              (backupAudioIsolationConfirmed || (backupOutputTestActive && backupTestStartedReady)),
               hotStandbyOutputIsolationConfirmed, hotStandbyExecutionArmed,
-              !backupOutputTestActive, !workspaceTransferInProgress,
+              (!backupOutputTestActive || backupTestStartedReady), !workspaceTransferInProgress,
               !failoverActive, !failoverTakeoverLatched else {
             failoverReady = false
             failoverBlockedReason = "Contrôle audio/isolation HOT STANDBY non prêts ou opération en cours"
@@ -3958,7 +3976,7 @@ final class NetworkDiscovery: ObservableObject {
             return
         }
 
-        guard backupAudioIsolationConfirmed else {
+        guard backupAudioIsolationConfirmed || (backupOutputTestActive && backupTestStartedReady) else {
             failoverActivationError =
                 "Isolation audio BACKUP non confirmée"
             return
@@ -4144,6 +4162,18 @@ final class NetworkDiscovery: ObservableObject {
     }
 
 
+    private func receivePrimaryHeartbeat(qlabHealthy: Bool) {
+        lastHeartbeatAt = Date()
+        primaryQLabHealthy = qlabHealthy
+        if qlabHealthy {
+            markLinkRestored()
+        } else {
+            markLinkLost(reason: "QLab du PRIMARY ne répond plus")
+            // Transport is alive; show availability is a separate fact.
+            heartbeatAlive = true
+        }
+    }
+
     private func startHeartbeatMonitor() {
         startRecoveryMonitor()
         heartbeatMonitorTask?.cancel()
@@ -4199,7 +4229,7 @@ final class NetworkDiscovery: ObservableObject {
                 if alive {
                     self.heartbeatAlive = true
 
-                    if self.linkLost {
+                    if self.primaryQLabHealthy && self.linkLost {
                         self.markLinkRestored()
                     }
                 } else {
@@ -4222,6 +4252,7 @@ final class NetworkDiscovery: ObservableObject {
         heartbeatMonitorTask = nil
 
         heartbeatAlive = false
+        primaryQLabHealthy = false
         lastHeartbeatAt = nil
         linkLost = false
         linkLostAt = nil
@@ -5286,6 +5317,7 @@ final class NetworkDiscovery: ObservableObject {
         connectedWorkspace = nil
         protocolVersion = nil
         heartbeatAlive = false
+        primaryQLabHealthy = false
         lastHeartbeatAt = nil
         heartbeatMonitorTask?.cancel()
         heartbeatMonitorTask = nil
@@ -5527,31 +5559,8 @@ final class NetworkDiscovery: ObservableObject {
                                 ?? true
 
 
-                            if !masterQLabAlive {
-
-                                self.heartbeatAlive = false
-
-                                self.markLinkLost(
-                                    reason:
-                                        "QLab du MASTER ne répond plus"
-                                )
-
-                                continue
-                            }
-
-
+                            self.receivePrimaryHeartbeat(qlabHealthy: masterQLabAlive)
                             self.requestEventClock(on: connection)
-                            self.lastHeartbeatAt = Date()
-
-
-                            if self.linkLost {
-
-                                self.markLinkRestored()
-
-                            } else {
-
-                                self.heartbeatAlive = true
-                            }
 
                         case "MASTER_EVENT":
                             MirrorDiagnostics.log("\(object["eventType"] as? String ?? "EVENT") reçu TCP event=\(object["eventID"] as? String ?? "?") seq=\(object["sequence"] ?? "?") cue=\(object["cueID"] as? String ?? "")")

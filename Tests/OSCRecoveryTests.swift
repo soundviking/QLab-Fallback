@@ -384,6 +384,10 @@ final class FakeQLab: @unchecked Sendable {
         backupPlayback.active = true; backupPlayback.stamp = ProcessInfo.processInfo.systemUptime
         backupPlayback.playhead = "BACKUP-ACTIVE-CUE"
         manager.testRecoveryMonitoring(); master.testRecoveryMonitoring()
+        manager.startBackupOutputTest()
+        await waitFor("Audio test opens verified BACKUP outputs") { !server.isMuted() && !manager.backupAudioIsolationConfirmed }
+        manager.refreshLocalQLabState()
+        expect(manager.failoverReady, "Verified test remains eligible for takeover")
         masterServer.silence(true)
         try await Task.sleep(nanoseconds: 350_000_000)
         expect(!manager.failoverActive && master.qlabOSCConnected, "350 ms QLab response gap does not trigger takeover")
@@ -484,6 +488,14 @@ final class FakeQLab: @unchecked Sendable {
         heartbeatProbe.testHeartbeatMonitor(age: 2, transferring: true)
         try await Task.sleep(nanoseconds: 300_000_000)
         expect(!heartbeatProbe.linkLost, "Transfer retains six-second heartbeat allowance")
+        heartbeatProbe.stop()
+        heartbeatProbe.testHeartbeatMonitor()
+        heartbeatProbe.testPrimaryHeartbeat(healthy: false)
+        try await Task.sleep(nanoseconds: 300_000_000)
+        expect(heartbeatProbe.heartbeatAlive && heartbeatProbe.linkLost && !heartbeatProbe.primaryQLabHealthy,
+               "Fresh transport cannot restore unavailable PRIMARY QLab")
+        heartbeatProbe.testPrimaryHeartbeat(healthy: true)
+        expect(!heartbeatProbe.linkLost && heartbeatProbe.primaryQLabHealthy, "New healthy heartbeat restores availability")
         heartbeatProbe.stop()
         print("PASS: \(checks) OSC recovery and manager integration checks")
     }
