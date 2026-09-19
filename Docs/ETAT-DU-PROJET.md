@@ -13,7 +13,7 @@ Build5.13-test
 - isolation audio du BACKUP ;
 - sélection bidirectionnelle ;
 - failover ;
-- retour silencieux du MASTER ;
+- retour silencieux du PRIMARY ;
 - reprise manuelle du son.
 
 ## Contraintes permanentes
@@ -23,4 +23,8 @@ Build5.13-test
 - distinguer les tests réellement exécutés des tests à effectuer sur deux Macs ;
 - préserver les protections audio et failover.
 
-Les validations terrain MASTER/BACKUP sur deux Macs restent à finaliser pour cette version bêta.
+Les validations terrain PRIMARY/BACKUP sur deux Macs restent à finaliser pour cette version bêta.
+
+## Travail en revue
+
+La branche `codex/show-reliability-localization` part de `aaf4173`. Les références publiées et `main` restent intactes. Le compte rendu de la passe et les limites de validation sont dans `REVIEW-2026-09-19.md`.
