@@ -13,7 +13,7 @@ extension QLabOSCClient {
 SWIFT
 SOURCES=()
 for SOURCE in Sources/*.swift; do
-  case "$SOURCE" in *ContentView.swift|*App.swift|*NetworkDiscovery.swift|*QLabOSCClient.swift) ;; *) SOURCES+=("$SOURCE");; esac
+  case "$SOURCE" in *ContentView.swift|*AdvancedSettingsHost.swift|*App.swift|*NetworkDiscovery.swift|*QLabOSCClient.swift) ;; *) SOURCES+=("$SOURCE");; esac
 done
 xcrun swiftc -module-cache-path /private/tmp/qlab55-test-cache -parse-as-library "${SOURCES[@]}" "$TEST_TMP/NetworkDiscovery.swift" "$TEST_TMP/QLabOSCClient.swift" Tests/OSCRecoveryTests.swift -framework Security -o "$TEST_TMP/tests"
 QLAB_FALLBACK_TEST_LOG_STDOUT=1 "$TEST_TMP/tests"

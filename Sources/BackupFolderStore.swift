@@ -16,7 +16,7 @@ final class BackupFolderStore: ObservableObject {
         guard let data = defaults.data(forKey: key) else { return }
         do {
             var stale = false
-            let resolved = try URL(resolvingBookmarkData: data, options: [.withSecurityScope, .withoutUI], bookmarkDataIsStale: &stale)
+            let resolved = try URL(resolvingBookmarkData: data, options: [.withSecurityScope, .withoutUI, .withoutMounting], bookmarkDataIsStale: &stale)
             if resolved.startAccessingSecurityScopedResource() { accesses.append(resolved) }
             url = resolved
             try Self.checkWritable(resolved)

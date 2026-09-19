@@ -30,3 +30,6 @@ credentials.*
 *.qlab4
 *.qlab5
 *.qlab
+
+# Generated validation logs, images and reports (review summary lives in Docs).
+Validation/

@@ -27,9 +27,6 @@ struct ContentView: View {
     @State private var isActive = false
     @State private var masterDetected = false
     @State private var showFallbackConfirmation = false
-    @State private var fallbackProgress = 0.0
-    private var fallbackPreparing: Bool { networkDiscovery.workspaceTransferInProgress }
-    private var fallbackReady: Bool { networkDiscovery.workspaceTransferReady }
     private var masterReady: Bool { networkDiscovery.isConnected }
 
     private let backgroundColor = Color(
@@ -83,6 +80,7 @@ struct ContentView: View {
                     .frame(height: 12)
 
                 workspacePanel
+                    .disabled(isActive)
                 if selectedRole == .backup {
                     BackupFolderView(store: networkDiscovery.backupFolder)
                         .padding(.top, 10)
@@ -144,7 +142,7 @@ struct ContentView: View {
                                         alignment: .leading,
                                         spacing: 2
                                     ) {
-                                        AppText(machine.name)
+                                        Text(verbatim: machine.name)
                                             .font(
                                                 .system(
                                                     size: 14,
@@ -204,9 +202,6 @@ struct ContentView: View {
 
                             showFallbackConfirmation =
                                 false
-
-                            fallbackProgress =
-                                0
 
                             networkDiscovery
                                 .requestWorkspaceTransfer()
@@ -358,7 +353,7 @@ struct ContentView: View {
                                 .foregroundStyle(.orange)
 
                             AppText(
-                                "MODE TEST ACTIF — \(networkDiscovery.backupOutputTestRemainingSeconds) s"
+                                L10n.format("MODE TEST ACTIF — %ld s", networkDiscovery.backupOutputTestRemainingSeconds)
                             )
                             .font(
                                 .system(
@@ -546,7 +541,7 @@ struct ContentView: View {
                                 }
 
                                 AppText(
-                                    "Arrêt automatique dans \(networkDiscovery.backupOutputTestRemainingSeconds) s"
+                                    L10n.format("Arrêt automatique dans %ld s", networkDiscovery.backupOutputTestRemainingSeconds)
                                 )
                                 .font(.system(size: 11))
                                 .foregroundStyle(.secondary)
@@ -1156,7 +1151,7 @@ struct ContentView: View {
 
             Spacer()
 
-            AppText(value)
+            Text(verbatim: ["Workspace PRIMARY", "Workspace local", "Machine PRIMARY", "Dossier projet PRIMARY", "Projet BACKUP"].contains(title) ? value : L10n.text(value))
                 .foregroundStyle(color)
                 .multilineTextAlignment(.trailing)
                 .lineLimit(2)
@@ -2396,6 +2391,13 @@ struct ContentView: View {
                             )
 
                             advancedStatusRow(
+                                "QLab PRIMARY",
+                                value: networkDiscovery.heartbeatAlive && networkDiscovery.primaryQLabHealthy ? "Disponible" : "Indisponible",
+                                systemImage: "app.connected.to.app.below.fill",
+                                color: networkDiscovery.heartbeatAlive && networkDiscovery.primaryQLabHealthy ? .green : .orange
+                            )
+
+                            advancedStatusRow(
                                 "Liaison PRIMARY",
                                 value:
                                     networkDiscovery
@@ -2641,7 +2643,7 @@ struct ContentView: View {
         }
 
         let hostedView = AnyView(
-            LanguageScope { advancedSettingsView.environmentObject(networkDiscovery).preferredColorScheme(.dark) }
+            AdvancedSettingsHost(manager: networkDiscovery, role: $selectedRole) { advancedSettingsView }
         )
 
         let hostingController = NSHostingController(
@@ -2838,7 +2840,7 @@ struct ContentView: View {
                 if availableWorkspaces.count > 1 {
 
                     AppText(
-                        "\(availableWorkspaces.count) ouverts"
+                        L10n.format("Workspaces ouverts : %ld", availableWorkspaces.count)
                     )
                     .font(.caption)
                     .foregroundStyle(.secondary)
@@ -2853,7 +2855,7 @@ struct ContentView: View {
                     .foregroundStyle(.secondary)
 
 
-                if availableWorkspaces.count > 1 {
+                if !availableWorkspaces.isEmpty {
 
                     Menu {
 
@@ -2878,7 +2880,7 @@ struct ContentView: View {
                                 if duplicateCount > 1 {
 
                                     workspaceDetectionError =
-                                        "Plusieurs workspaces QLab portent le nom « \(name) ». Renomme-les pour éviter toute ambiguïté."
+                                        "Plusieurs workspaces portent ce nom. Renommez-les pour éviter toute ambiguïté."
 
                                 } else {
 
@@ -2889,7 +2891,7 @@ struct ContentView: View {
 
                                 HStack {
 
-                                    AppText(name)
+                                    Text(verbatim: name)
 
                                     if workspaceName == name {
 
@@ -2906,7 +2908,7 @@ struct ContentView: View {
 
                         HStack(spacing: 7) {
 
-                            AppText(workspaceName)
+                            Text(verbatim: workspaceName == "Non détecté" ? L10n.text(workspaceName) : workspaceName)
                                 .font(
                                     .system(
                                         size: 15,
@@ -2933,7 +2935,7 @@ struct ContentView: View {
 
                 } else {
 
-                    AppText(workspaceName)
+                    Text(verbatim: workspaceName == "Non détecté" ? L10n.text(workspaceName) : workspaceName)
                         .font(
                             .system(
                                 size: 15,

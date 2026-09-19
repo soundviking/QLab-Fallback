@@ -4311,55 +4311,6 @@ final class NetworkDiscovery: ObservableObject {
     }
 
 
-    func getQLabWorkspaceName() -> String? {
-        let script = """
-        tell application "QLab"
-            tell front workspace
-                return name
-            end tell
-        end tell
-        """
-
-        let process = Process()
-        process.executableURL = URL(
-            fileURLWithPath: "/usr/bin/osascript"
-        )
-        process.arguments = ["-e", script]
-
-        let pipe = Pipe()
-        process.standardOutput = pipe
-        process.standardError = pipe
-
-        do {
-            try process.run()
-            process.waitUntilExit()
-
-            let data = pipe.fileHandleForReading
-                .readDataToEndOfFile()
-
-            guard process.terminationStatus == 0,
-                let result = String(
-                    data: data,
-                    encoding: .utf8
-                )
-            else {
-                return nil
-            }
-
-            let cleaned = result
-                .trimmingCharacters(
-                    in: .whitespacesAndNewlines
-                )
-
-            print("QLab workspace détecté :", cleaned)
-
-            return cleaned.isEmpty ? nil : cleaned
-
-        } catch {
-            return nil
-        }
-    }
-
     private func registerQLabOSCResponse() {
 
         lastQLabOSCResponseAt = Date()
@@ -4827,7 +4778,7 @@ final class NetworkDiscovery: ObservableObject {
     private func evaluateQLabCompatibility(
         version: String
     ) {
-
+        guard qlabVersion != version else { return }
         qlabVersion = version
         qlabCompatibilityValidated = false
         qlabCompatibilityWarning = false
@@ -5498,6 +5449,7 @@ final class NetworkDiscovery: ObservableObject {
                                 object["protocolVersion"] as? Int
 
                             self.lastHeartbeatAt = nil
+                            self.primaryQLabHealthy = false
                             self.heartbeatAlive = false
                             self.linkLost = false
                             self.linkLostAt = nil
@@ -6416,7 +6368,7 @@ extension NetworkDiscovery {
     }
     func requestMasterReturn() {
         guard runtimeRole == .backup, failoverActive || failoverTakeoverLatched,
-              masterReturnReady, isConnected, heartbeatAlive, !returnInProgress,
+              masterReturnReady, isConnected, heartbeatAlive, primaryQLabHealthy, !linkLost, !returnInProgress,
               Date().timeIntervalSince(recoveryLastReady) < 3 else {
             failoverDeactivationError = "Attendre le PRIMARY aligné en silence avant de reprendre le son"
             return

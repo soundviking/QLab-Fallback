@@ -480,6 +480,23 @@ final class FakeQLab: @unchecked Sendable {
         mirror.stop()
         manager.testDisconnect(); master.testDisconnect(); tcp.cancel()
         manager.stop()
+        let audioEdge = NetworkDiscovery(makeOSCClient: { QLabOSCClient(port: 55300, replyPort: 55301) }, runQLab: { _, _ in "" })
+        audioEdge.testStartBackupOSC()
+        await waitFor("Audio expiry fixture isolated") { audioEdge.backupAudioIsolationConfirmed }
+        audioEdge.startBackupOutputTest()
+        await waitFor("Normal test opens outputs") { !server.isMuted() && !audioEdge.backupAudioIsolationConfirmed }
+        audioEdge.backupOutputTestEndsAt = Date().addingTimeInterval(-1)
+        await waitFor("Normal expiry re-isolates outputs") { !audioEdge.backupOutputTestActive && server.isMuted() && audioEdge.backupAudioIsolationConfirmed }
+        audioEdge.startBackupOutputTest()
+        await waitFor("Unready mirror audio test opens outputs") { !server.isMuted() && !audioEdge.backupAudioIsolationConfirmed }
+        audioEdge.testLoseMaster()
+        audioEdge.backupOutputTestEndsAt = Date().addingTimeInterval(-1)
+        await waitFor("Loss at expiry latches audible output even when mirror is unready") { !audioEdge.backupOutputTestActive && audioEdge.failoverTakeoverLatched }
+        try await Task.sleep(nanoseconds: 350_000_000)
+        expect(!server.isMuted() && !audioEdge.failoverActive, "Unready mirror never claims confirmed failover and never remutes test output")
+        audioEdge.testPrimaryHeartbeat(healthy: true)
+        expect(audioEdge.failoverTakeoverLatched && !server.isMuted(), "PRIMARY return preserves the held BACKUP output")
+        audioEdge.stop()
         server.configureMute(reject: true, clear: true)
         let refusedAudio = NetworkDiscovery(makeOSCClient: { QLabOSCClient(port: 55300, replyPort: 55301) }, runQLab: { _, _ in "" })
         refusedAudio.testStartBackupOSC()

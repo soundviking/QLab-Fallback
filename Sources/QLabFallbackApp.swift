@@ -3,6 +3,8 @@ import AppKit
 
 @main
 struct QLabFallbackApp: App {
+    @Environment(\.openWindow) private var openWindow
+    @AppStorage("QLabFallback.Language") private var language = "system"
     @StateObject private var networkDiscovery = NetworkDiscovery()
     @StateObject private var qlabDiscovery = QLabDiscoveryService()
 
@@ -12,11 +14,14 @@ struct QLabFallbackApp: App {
 
     private func showHelp(_ page: Int) {
         NSApp.activate(ignoringOtherApps: true)
-        NotificationCenter.default.post(name: .qlabShowHelp, object: page)
+        openWindow(id: "main")
+        DispatchQueue.main.async {
+            NotificationCenter.default.post(name: .qlabShowHelp, object: page)
+        }
     }
 
     var body: some Scene {
-        WindowGroup {
+        Window("QLab Fallback", id: "main") {
             ContentView()
                 .environmentObject(networkDiscovery)
                 .environmentObject(qlabDiscovery)

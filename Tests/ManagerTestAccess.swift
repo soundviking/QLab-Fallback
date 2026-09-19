@@ -127,3 +127,6 @@ extension NetworkDiscovery {
 extension NetworkDiscovery {
     func testPrimaryHeartbeat(healthy: Bool) { receivePrimaryHeartbeat(qlabHealthy: healthy) }
 }
+extension NetworkDiscovery {
+    func testVersion(_ version: String) { evaluateQLabCompatibility(version: version) }
+}

@@ -7,6 +7,9 @@ enum L10n {
         if supported.contains(selection) { return selection }
         return Bundle.preferredLocalizations(from: supported, forPreferences: preferred).first ?? "en"
     }
+    static func format(_ key: String, _ arguments: CVarArg...) -> String {
+        String(format: text(key), arguments: arguments)
+    }
     static func text(_ key: String, selection: String? = nil, resourceBundle: Bundle = .main) -> String {
         let normalized = key
         let code = languageCode(selection ?? UserDefaults.standard.string(forKey: "QLabFallback.Language") ?? "system")

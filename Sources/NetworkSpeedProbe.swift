@@ -34,7 +34,7 @@ final class NetworkSpeedProbe: @unchecked Sendable {
         }
     }
     func serve(parameters: NWParameters, ready: @escaping @Sendable (UInt16) -> Void) {
-        queue.async {
+        queue.async { [self] in
             do {
                 let listener = try NWListener(using: parameters, on: .any); self.listener = listener
                 listener.stateUpdateHandler = { [weak self, weak listener] state in
@@ -81,7 +81,7 @@ final class NetworkSpeedProbe: @unchecked Sendable {
         })
     }
     func receive(host: NWEndpoint.Host, port: UInt16, parameters: NWParameters) {
-        queue.async {
+        queue.async { [self] in
             let peer = NWConnection(host: host, port: NWEndpoint.Port(rawValue: port)!, using: parameters)
             self.connection = peer
             peer.stateUpdateHandler = { [weak self, weak peer] state in
